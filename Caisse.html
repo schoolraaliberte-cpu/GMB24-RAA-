@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestion Boutique</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#f4f7fb;margin:0;padding:16px;color:#222}
+    .container{max-width:980px;margin:auto;background:#fff;padding:18px;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.08)}
+    h1,h2{color:#0f766e}
+    .card{background:#f8fafc;border:1px solid #e2e8f0;padding:14px;border-radius:12px;margin-top:12px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+    input,select,button{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;box-sizing:border-box;font-size:16px}
+    button{background:#0f766e;color:#fff;border:none;cursor:pointer;font-weight:bold}
+    button:hover{background:#115e59}
+    .danger{background:#dc2626}
+    .danger:hover{background:#b91c1c}
+    .success{background:#16a34a}
+    .success:hover{background:#15803d}
+    .small{font-size:14px;color:#475569}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{border:1px solid #e2e8f0;padding:10px;text-align:left}
+    th{background:#e6fffb}
+    .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+    .summary div{background:#f1f5f9;padding:14px;border-radius:12px}
+    .value{font-size:22px;font-weight:bold}
+    #appArea{display:none}
+    #recaptcha-container{margin-top:12px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Connexion par téléphone</h1>
+
+    <div class="card" id="loginCard">
+      <div class="grid">
+        <div>
+          <label>Numéro de téléphone</label>
+          <input id="phoneNumber" placeholder="+228XXXXXXXX" />
+        </div>
+        <div>
+          <label>Code reçu par SMS</label>
+          <input id="smsCode" placeholder="6 chiffres" />
+        </div>
+      </div>
+
+      <div id="recaptcha-container"></div>
+
+      <div class="grid" style="margin-top:12px">
+        <button id="sendCodeBtn">Envoyer le code</button>
+        <button id="verifyCodeBtn">Vérifier et entrer</button>
+      </div>
+
+      <p class="small" id="authStatus"></p>
+    </div>
+
+    <div id="appArea">
+      <h1>Gestion de caisse boutique</h1>
+      <p class="small">Ventes, dépenses, inventaire et calcul automatique de l’impôt trimestriel.</p>
+
+      <div class="card">
+        <h2>Paramètres fiscaux</h2>
+        <div class="grid">
+          <div>
+            <label>Pays</label>
+            <input id="country" value="Togo" />
+          </div>
+          <div>
+            <label>Régime fiscal</label>
+            <select id="taxRegime">
+              <option value="turnover">Taxe sur chiffre d'affaires</option>
+              <option value="profit">Impôt sur bénéfice</option>
+            </select>
+          </div>
+          <div>
+            <label>Taux d'impôt (%)</label>
+            <input id="taxRate" type="number" value="27" min="0" step="0.01" />
+          </div>
+          <div>
+            <label>TVA / taxe ventes (%)</label>
+            <input id="vatRate" type="number" value="18" min="0" step="0.01" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Inventaire trimestriel</h2>
+        <div class="grid">
+          <div><label>Stock initial</label><input id="stockStart" type="number" value="0" min="0" step="1"></div>
+          <div><label>Achats du trimestre</label><input id="purchases" type="number" value="0" min="0" step="0.01"></div>
+          <div><label>Stock final</label><input id="stockEnd" type="number" value="0" min="0" step="1"></div>
+          <div><label>Coût unitaire moyen</label><input id="unitCost" type="number" value="0" min="0" step="0.01"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Ajouter une vente</h2>
+        <div class="grid">
+          <div><label>Produit</label><input id="saleName" placeholder="Ex: Riz"></div>
+          <div><label>Montant</label><input id="saleAmount" type="number" min="0" step="0.01"></div>
+          <div><label>Date</label><input id="saleDate" type="date"></div>
+        </div>
+        <button onclick="addSale()">Ajouter vente</button>
+        <table>
+          <thead><tr><th>Produit</th><th>Montant</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody id="salesTable"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Ajouter une dépense</h2>
+        <div class="grid">
+          <div><label>Libellé</label><input id="expenseName" placeholder="Ex: Transport"></div>
+          <div><label>Montant</label><input id="expenseAmount" type="number" min="0" step="0.01"></div>
+          <div><label>Date</label><input id="expenseDate" type="date"></div>
+        </div>
+        <button onclick="addExpense()">Ajouter dépense</button>
+        <table>
+          <thead><tr><th>Libellé</th><th>Montant</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody id="expensesTable"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Calcul automatique</h2>
+        <button class="success" onclick="calculateTax()">Calculer maintenant</button>
+        <div class="summary" style="margin-top:12px">
+          <div><div>Ventes totales</div><div class="value" id="totalSales">0</div></div>
+          <div><div>Dépenses totales</div><div class="value" id="totalExpenses">0</div></div>
+          <div><div>Bénéfice estimé</div><div class="value" id="profit">0</div></div>
+          <div><div>Impôt estimé</div><div class="value" id="tax">0</div></div>
+        </div>
+        <p id="resultText" class="small"></p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-analytics.js";
+    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCBYnjsBMJGeR57Kk3FX9zeIplE5EFkcIY",
+      authDomain: "gmb24-raa.firebaseapp.com",
+      databaseURL: "https://gmb24-raa-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "gmb24-raa",
+      storageBucket: "gmb24-raa.firebasestorage.app",
+      messagingSenderId: "558507911211",
+      appId: "1:558507911211:web:5cdc99c082fe653684626e",
+      measurementId: "G-KVHFHTJVFN"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    getAnalytics(app);
+    const auth = getAuth(app);
+
+    let confirmationResult;
+    let sales = [];
+    let expenses = [];
+
+    const fmt = n => Number(n || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      size: 'normal'
+    });
+    window.recaptchaVerifier.render();
+
+    document.getElementById('sendCodeBtn').addEventListener('click', async () => {
+      const phoneNumber = document.getElementById('phoneNumber').value.trim();
+      const status = document.getElementById('authStatus');
+      if (!phoneNumber) return status.textContent = "Entre un numéro valide avec l'indicatif, ex: +228XXXXXXXX";
+      try {
+        status.textContent = "Envoi du code...";
+        confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
+        status.textContent = "Code envoyé par SMS.";
+      } catch (e) {
+        status.textContent = "Erreur: " + e.message;
+      }
+    });
+
+    document.getElementById('verifyCodeBtn').addEventListener('click', async () => {
+      const code = document.getElementById('smsCode').value.trim();
+      const status = document.getElementById('authStatus');
+      if (!confirmationResult) return status.textContent = "D'abord envoie le code.";
+      try {
+        await confirmationResult.confirm(code);
+        document.getElementById('loginCard').style.display = 'none';
+        document.getElementById('appArea').style.display = 'block';
+      } catch (e) {
+        status.textContent = "Code incorrect: " + e.message;
+      }
+    });
+
+    window.addSale = function() {
+      const name = document.getElementById('saleName').value.trim();
+      const amount = parseFloat(document.getElementById('saleAmount').value);
+      const date = document.getElementById('saleDate').value || new Date().toISOString().slice(0,10);
+      if (!name || isNaN(amount)) return alert("Remplis le nom et le montant de la vente.");
+      sales.push({ name, amount, date });
+      document.getElementById('saleName').value = '';
+      document.getElementById('saleAmount').value = '';
+      renderSales();
+      calculateTax();
+    };
+
+    window.addExpense = function() {
+      const name = document.getElementById('expenseName').value.trim();
+      const amount = parseFloat(document.getElementById('expenseAmount').value);
+      const date = document.getElementById('expenseDate').value || new Date().toISOString().slice(0,10);
+      if (!name || isNaN(amount)) return alert("Remplis le libellé et le montant de la dépense.");
+      expenses.push({ name, amount, date });
+      document.getElementById('expenseName').value = '';
+      document.getElementById('expenseAmount').value = '';
+      renderExpenses();
+      calculateTax();
+    };
+
+    window.deleteSale = function(i) { sales.splice(i,1); renderSales(); calculateTax(); };
+    window.deleteExpense = function(i) { expenses.splice(i,1); renderExpenses(); calculateTax(); };
+
+    function renderSales() {
+      const tbody = document.getElementById('salesTable');
+      tbody.innerHTML = sales.map((s,i)=>`
+        <tr>
+          <td>${s.name}</td>
+          <td>${fmt(s.amount)}</td>
+          <td>${s.date}</td>
+          <td><button class="danger" onclick="deleteSale(${i})">Supprimer</button></td>
+        </tr>`).join('');
+    }
+
+    function renderExpenses() {
+      const tbody = document.getElementById('expensesTable');
+      tbody.innerHTML = expenses.map((e,i)=>`
+        <tr>
+          <td>${e.name}</td>
+          <td>${fmt(e.amount)}</td>
+          <td>${e.date}</td>
+          <td><button class="danger" onclick="deleteExpense(${i})">Supprimer</button></td>
+        </tr>`).join('');
+    }
+
+    window.calculateTax = function() {
+      const totalSales = sales.reduce((a,b)=>a+b.amount,0);
+      const totalExpenses = expenses.reduce((a,b)=>a+b.amount,0);
+      const stockStart = parseFloat(document.getElementById('stockStart').value) || 0;
+      const purchases = parseFloat(document.getElementById('purchases').value) || 0;
+      const stockEnd = parseFloat(document.getElementById('stockEnd').value) || 0;
+      const unitCost = parseFloat(document.getElementById('unitCost').value) || 0;
+      const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+      const regime = document.getElementById('taxRegime').value;
+      const country = document.getElementById('country').value || '—';
+
+      const cogs = Math.max(0, stockStart + purchases - stockEnd) * unitCost;
+      const profit = totalSales - totalExpenses - cogs;
+      const taxBase = regime === 'turnover' ? totalSales : Math.max(0, profit);
+      const tax = taxBase * (taxRate / 100);
+
+      document.getElementById('totalSales').textContent = fmt(totalSales);
+      document.getElementById('totalExpenses').textContent = fmt(totalExpenses);
+      document.getElementById('profit').textContent = fmt(profit);
+      document.getElementById('tax').textContent = fmt(tax);
+      document.getElementById('resultText').textContent =
+        `Pays: ${country}. Base: ${regime === 'turnover' ? 'chiffre d’affaires' : 'bénéfice'}. Impôt trimestriel estimé: ${fmt(tax)}.`;
+    };
+  </script>
+</body>
+</html>
