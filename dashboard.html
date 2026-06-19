@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GMB24 Pro - Dashboard Boutiquier Togo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial;background:#f4f7fa;color:#1a365d}
+header{background:#1a365d;color:white;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+header h1{font-size:18px}
+.btn-logout{background:#dc2626;color:white;border:none;padding:8px 15px;border-radius:6px;cursor:pointer;font-weight:bold}
+.container{max-width:1200px;margin:20px auto;padding:0 15px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;margin-bottom:20px}
+.card{background:white;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.card h3{color:#2563eb;margin-bottom:10px;font-size:15px}
+.card.value{font-size:26px;font-weight:bold;color:#16a34a}
+.card.danger.value{color:#dc2626}
+section.card{margin-bottom:20px}
+input,select,button,textarea{padding:10px;border-radius:8px;border:1px solid #cbd5e0;font-size:15px;width:100%;margin:5px 0}
+button{background:#2563eb;color:white;border:none;cursor:pointer;font-weight:bold;transition:0.2s}
+button:hover{background:#1d4ed8}
+button.success{background:#16a34a}
+button.warning{background:#f59e0b}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+table{width:100%;border-collapse:collapse;margin-top:15px;font-size:14px}
+th,td{padding:8px;text-align:left;border-bottom:1px solid #e2e8f0}
+th{background:#1a365d;color:white}
+tr:hover{background:#f8fafc}
+.badge{padding:4px 8px;border-radius:5px;font-size:12px;font-weight:bold}
+.badge.oui{background:#dcfce7;color:#16a34a}
+.badge.non{background:#fee2e2;color:#dc2626}
+.logo-preview{width:80px;height:80px;border-radius:10px;object-fit:cover;border:2px solid #cbd5e0}
+.tabs{display:flex;gap:10px;margin-bottom:15px;border-bottom:2px solid #e2e8f0;flex-wrap:wrap}
+.tab{padding:10px 15px;cursor:pointer;background:none;border:none;color:#64748b;font-weight:bold;border-bottom:3px solid transparent}
+.tab.active{color:#2563eb;border-bottom:3px solid #2563eb}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.chat-box{height:300px;overflow-y:auto;border:1px solid #cbd5e0;border-radius:8px;padding:10px;background:#f8fafc;margin-bottom:10px}
+.msg-user{background:#2563eb;color:white;padding:8px 12px;border-radius:8px;margin:5px 0;margin-left:30%;text-align:right}
+.msg-ai{background:#e2e8f0;color:#1a365d;padding:8px 12px;border-radius:8px;margin:5px 0;margin-right:30%}
+.licence-box{background:linear-gradient(135deg,#1a365d,#2563eb);color:white;padding:20px;border-radius:10px;text-align:center}
+#userPhone{color:#fbbf24;font-weight:bold}
+@media(max-width:768px){.grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+<h1>GMB24 Pro Fiscal</h1>
+<div style="display:flex;align-items:center;gap:10px">
+<span id="userPhone">Connecté</span>
+<button class="btn-logout" onclick="deconnexion()">Déconnexion</button>
+</div>
+</header>
+
+<div class="container">
+<div class="tabs">
+<button class="tab active" onclick="showTab('dashboard')">Dashboard</button>
+<button class="tab" onclick="showTab('boutique')">Ma Boutique</button>
+<button class="tab" onclick="showTab('ventes')">Ventes</button>
+<button class="tab" onclick="showTab('depenses')">Dépenses</button>
+<button class="tab" onclick="showTab('ia')">Assistant OTR</button>
+<button class="tab" onclick="showTab('licence')">Licence 5000F</button>
+</div>
+
+<div id="dashboard" class="tab-content active">
+<div class="grid">
+<div class="card">
+<h3>💰 Ventes TTC Mois</h3>
+<div class="value" id="ventesMois">0 FCFA</div>
+</div>
+<div class="card danger">
+<h3>📉 Dépenses Mois</h3>
+<div class="value" id="depensesMois">0 FCFA</div>
+</div>
+<div class="card">
+<h3>📊 TVA Collectée</h3>
+<div class="value" id="tvaCollectee">0 FCFA</div>
+</div>
+<div class="card">
+<h3>💵 Profit Net</h3>
+<div class="value" id="profitMois">0 FCFA</div>
+</div>
+</div>
+
+<section class="card">
+<h3>Clôture Mensuelle - Inventaire</h3>
+<p>Calcule ton profit : Ventes - Dépenses - Impôt OTR 1%</p>
+<button class="success" onclick="cloturerMois()">📋 Générer Inventaire</button>
+<div id="resultatCloture" style="margin-top:15px"></div>
+</section>
+</div>
+
+<div id="boutique" class="tab-content">
+<section class="card">
+<h3>Informations Boutique</h3>
+<div class="form-grid">
+<input type="text" id="nomPrenom" placeholder="Nom et Prénom du boutiquier">
+<input type="text" id="nomBoutique" placeholder="Nom de la boutique">
+<input type="text" id="domaine" placeholder="Domaine d'activité" value="Service informatique - Programmeur">
+<input type="text" id="nif" placeholder="NIF OTR">
+<input type="file" id="logo" accept="image/*" onchange="uploadLogo(event)">
+</div>
+<div style="margin-top:10px">
+<img id="logoPreview" class="logo-preview" src="https://via.placeholder.com/80" alt="Logo">
+</div>
+<button onclick="sauvegarderBoutique()">💾 Sauvegarder Infos</button>
+</section>
+</div>
+
+<div id="ventes" class="tab-content">
+<section class="card">
+<h3>Nouvelle Vente</h3>
+<div class="form-grid">
+<input type="text" id="client" placeholder="Nom client">
+<input type="text" id="produit" placeholder="Produit/Service">
+<input type="number" id="prixHT" placeholder="Prix HT FCFA">
+<input type="number" id="qte" placeholder="Quantité" value="1">
+<select id="tvaOuiNon">
+<option value="non" selected>TVA : Non - 0%</option>
+<option value="oui">TVA : Oui - 18%</option>
+</select>
+<button onclick="ajouterVente()">+ Enregistrer Vente</button>
+</div>
+</section>
+
+<section class="card">
+<h3>Historique Ventes</h3>
+<table>
+<thead>
+<tr>
+<th>Date</th><th>Client</th><th>Produit</th><th>HT</th><th>Qté</th><th>TVA</th><th>TTC</th>
+</tr>
+</thead>
+<tbody id="listeVentes"><tr><td colspan="7" style="text-align:center;color:#94a3b8">Aucune vente</td></tr></tbody>
+</table>
+</section>
+</div>
+
+<div id="depenses" class="tab-content">
+<section class="card">
+<h3>Nouvelle Dépense</h3>
+<div class="form-grid">
+<input type="text" id="libelleDepense" placeholder="Loyer, Courant, Transport...">
+<input type="number" id="montantDepense" placeholder="Montant FCFA">
+<input type="date" id="dateDepense">
+<button onclick="ajouterDepense()">+ Ajouter Dépense</button>
+</div>
+</section>
+
+<section class="card">
+<h3>Historique Dépenses</h3>
+<table>
+<thead>
+<tr><th>Date</th><th>Libellé</th><th>Montant</th></tr>
+</thead>
+<tbody id="listeDepenses"><tr><td colspan="3" style="text-align:center;color:#94a3b8">Aucune dépense</td></tr></tbody>
+</table>
+</section>
+</div>
+
+<div id="ia" class="tab-content">
+<section class="card">
+<h3>Assistant Fiscalité Togo - IA</h3>
+<p style="font-size:13px;color:#64748b;margin-bottom:10px">Pose ta question : taux TVA 2026, impôt BIC, déclaration OTR...</p>
+<div class="chat-box" id="chatBox">
+<div class="msg-ai">Bonjour chef! Je connais la fiscalité togolaise 2026. Pose-moi ta question 👇</div>
+</div>
+<div style="display:flex;gap:10px">
+<input type="text" id="questionIA" placeholder="Ex: Quel est le taux d'IS pour SARL?">
+<button style="width:120px" onclick="poserQuestion()">Envoyer</button>
+</div>
+</section>
+</div>
+
+<div id="licence" class="tab-content">
+<section class="card licence-box">
+<h3>💎 Licence GMB24 Pro</h3>
+<p style="margin:10px 0;font-size:18px">Accès complet : 5000 FCFA / mois</p>
+<p style="font-size:14px">Paiement Mix by YAS</p>
+<h2>+228 70 34 68 52</h2>
+<p style="font-size:13px;margin-top:10px">Après paiement, envoie le reçu WhatsApp pour activation</p>
+<button class="warning" onclick="alert('Envoie 5000F sur +22870346852 via Mix by YAS. Puis contacte support.')">Payer Licence</button>
+</section>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, push, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyCBYnjsBMJGeR57Kk3FX9zeIplE5EFkcIY",
+authDomain: "gmb24-raa.firebaseapp.com",
+databaseURL: "https://gmb24-raa-default-rtdb.europe-west1.firebasedatabase.app",
+projectId: "gmb24-raa",
+storageBucket: "gmb24-raa.firebasestorage.app",
+messagingSenderId: "558507911211",
+appId: "1:558507911211:web:5cdc99c082fe653684626e"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+let userId = null;
+let ventes = {};
+let depenses = {};
+let boutique = {domaine: 'Service informatique - Programmeur'};
+
+onAuthStateChanged(auth, (user) => {
+if (user) {
+userId = user.uid;
+document.getElementById('userPhone').innerText = user.phoneNumber;
+chargerBoutique();
+chargerVentes();
+chargerDepenses();
+} else {
+window.location.href = './index.html';
+}
+});
+
+window.showTab = function(id) {
+document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+event.target.classList.add('active');
+document.getElementById(id).classList.add('active');
+}
+
+function chargerBoutique() {
+get(ref(db, 'boutique/' + userId)).then(snap => {
+if (snap.exists()) {
+boutique = snap.val();
+document.getElementById('nomPrenom').value = boutique.nomPrenom || '';
+document.getElementById('nomBoutique').value = boutique.nomBoutique || '';
+document.getElementById('domaine').value = boutique.domaine || 'Service informatique - Programmeur';
+document.getElementById('nif').value = boutique.nif || '';
+if (boutique.logo) document.getElementById('logoPreview').src = boutique.logo;
+}
+});
+}
+
+window.sauvegarderBoutique = function() {
+boutique = {
+nomPrenom: document.getElementById('nomPrenom').value,
+nomBoutique: document.getElementById('nomBoutique').value,
+domaine: document.getElementById('domaine').value,
+nif: document.getElementById('nif').value,
+logo: document.getElementById('logoPreview').src
+};
+set(ref(db, 'boutique/' + userId), boutique);
+alert('Infos boutique sauvegardées ✅');
+}
+
+window.uploadLogo = function(e) {
+const file = e.target.files[0];
+const reader = new FileReader();
+reader.onload = function(ev) {
+document.getElementById('logoPreview').src = ev.target.result;
+}
+reader.readAsDataURL(file);
+}
+
+window.ajouterVente = function() {
+const client = document.getElementById('client').value.trim();
+const produit = document.getElementById('produit').value.trim();
+const prixHT = parseInt(document.getElementById('prixHT').value);
+const qte = parseInt(document.getElementById('qte').value) || 1;
+const tvaOuiNon = document.getElementById('tvaOuiNon').value;
+
+if (!client ||!produit ||!prixHT) {
+alert('Remplis tous les champs');
+return;
+}
+
+const taux = tvaOuiNon === 'oui'? 18 : 0;
+const montantTVA = Math.round(prixHT * qte * taux / 100);
+const totalTTC = prixHT * qte + montantTVA;
+
+const vente = {
+client, produit, prixHT, qte, taux, tvaOuiNon, montantTVA, totalTTC,
+date: new Date().toLocaleString('fr-FR'),
+timestamp: Date.now(),
+mois: new Date().toISOString().slice(0,7)
+};
+
+push(ref(db, 'ventes/' + userId), vente);
+document.getElementById('client').value = '';
+document.getElementById('produit').value = '';
+document.getElementById('prixHT').value = '';
+}
+
+function chargerVentes() {
+onValue(ref(db, 'ventes/' + userId), (snapshot) => {
+ventes = snapshot.val() || {};
+afficherVentes();
+calculerStats();
+});
+}
+
+function afficherVentes() {
+const tbody = document.getElementById('listeVentes');
+tbody.innerHTML = '';
+Object.values(ventes).forEach(v => {
+const badge = v.tvaOuiNon === 'oui'? '<span class="badge oui">TVA Oui 18%</span>' : '<span class="badge non">TVA Non 0%</span>';
+tbody.innerHTML += `<tr>
+<td>${v.date}</td>
+<td>${v.client}</td>
+<td>${v.produit}</td>
+<td>${v.prixHT.toLocaleString()}</td>
+<td>${v.qte}</td>
+<td>${badge} ${v.montantTVA.toLocaleString()}</td>
+<td>${v.totalTTC.toLocaleString()} FCFA</td>
+</tr>`;
+});
+}
+
+window.ajouterDepense = function() {
+const libelle = document.getElementById('libelleDepense').value.trim();
+const montant = parseInt(document.getElementById('montantDepense').value);
+const date = document.getElementById('dateDepense').value || new Date().toISOString().slice(0,10);
+
+if (!libelle ||!montant) {
+alert('Remplis libellé et montant');
+return;
+}
+
+const depense = {libelle, montant, date, timestamp: Date.now(), mois: date.slice(0,7)};
+push(ref(db, 'depenses/' + userId), depense);
+document.getElementById('libelleDepense').value = '';
+document.getElementById('montantDepense').value = '';
+}
+
+function chargerDepenses() {
+onValue(ref(db, 'depenses/' + userId), (snapshot) => {
+depenses = snapshot.val() || {};
+afficherDepenses();
+calculerStats();
+});
+}
+
+function afficherDepenses() {
+const tbody = document.getElementById('listeDepenses');
+tbody.innerHTML = '';
+Object.values(depenses).forEach(d => {
+tbody.innerHTML += `<tr>
+<td>${d.date}</td>
+<td>${d.libelle}</td>
+<td>${d.montant.toLocaleString()} FCFA</td>
+</tr>`;
+});
+}
+
+function calculerStats() {
+const mois = new Date().toISOString().slice(0,7);
+let ventesMois = 0, tvaCollectee = 0, depensesMois = 0;
+
+Object.values(ventes).forEach(v => {
+if (v.mois === mois) {
+ventesMois += v.totalTTC;
+if (v.tvaOuiNon === 'oui') tvaCollectee += v.montantTVA;
+}
+});
+
+Object.values(depenses).forEach(d => {
+if (d.mois === mois) depensesMois += d.montant;
+});
+
+const impotOTR = Math.round(ventesMois * 0.01);
+const profit = ventesMois - depensesMois - impotOTR;
+
+document.getElementById('ventesMois').innerText = ventesMois.toLocaleString() + ' FCFA';
+document.getElementById('depensesMois').innerText = depensesMois.toLocaleString() + ' FCFA';
+document.getElementById('tvaCollectee').innerText = tvaCollectee.toLocaleString() + ' FCFA';
+document.getElementById('profitMois').innerText = profit.toLocaleString() + ' FCFA';
+}
+
+window.cloturerMois = function() {
+const mois = new Date().toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'});
+const v = document.getElementById('ventesMois').innerText;
+const d = document.getElementById('depensesMois').innerText;
+const t = document.getElementById('tvaCollectee').innerText;
+const p = document.getElementById('profitMois').innerText;
+const impot = (parseInt(v.replace(/\D/g,'')) * 0.01).toLocaleString();
+
+document.getElementById('resultatCloture').innerHTML = `
+<div style="background:#e0f2fe;padding:15px;border-radius:8px">
+<h4>Inventaire ${mois}</h4>
+<p><b>Boutique:</b> ${boutique.nomBoutique || 'Non défini'}</p>
+<p><b>Propriétaire:</b> ${boutique.nomPrenom || 'Non défini'}</p>
+<p><b>Domaine:</b> ${boutique.domaine}</p>
+<p><b>NIF:</b> ${boutique.nif || 'Non défini'}</p>
+<hr style="margin:10px 0">
+<p>Ventes TTC: ${v}</p>
+<p>TVA Collectée: ${t}</p>
+<p>Dépenses: ${d}</p>
+<p>Impôt OTR 1%: ${impot} FCFA</p>
+<h3 style="color:#16a34a;margin-top:10px">Profit Net: ${p}</h3>
+</div>
+`;
+}
+
+// Assistant IA Fiscalité Togo
+const baseConnaissances = {
+"tva 2026": "TVA Standard Togo 2026 : 18%. TVA réduite : 5% produits sociaux. Art 50 CGI Togo.",
+"impot bic": "Impôt BIC SARL Togo 2026 : 30% sur bénéfice. PME < 50M CA : régime forfaitaire 1% à 2%.",
+"seuil tva": "Seuil assujettissement TVA OTR Togo : 30 000 000 FCFA CA annuel.",
+"declaration otr": "Déclaration TVA OTR : avant le 15 du mois suivant. Déclaration BIC : avant 30 avril N+1.",
+"nif": "NIF = Numéro d'Identifiant Fiscal. Obligatoire pour factures OTR."
+};
+
+window.poserQuestion = function() {
+const q = document.getElementById('questionIA').value.toLowerCase();
+const chatBox = document.getElementById('chatBox');
+chatBox.innerHTML += `<div class="msg-user">${document.getElementById('questionIA').value}</div>`;
+
+let reponse = "Je n’ai pas l’info exacte. Vérifie sur otr.tg ou contacte ton centre des impôts. Je peux t’aider à calculer si tu me donnes les chiffres.";
+for (let key in baseConnaissances) {
+if (q.includes(key)) {
+reponse = baseConnaissances[key];
+break;
+}
+}
+
+setTimeout(() => {
+chatBox.innerHTML += `<div class="msg-ai">${reponse}</div>`;
+chatBox.scrollTop = chatBox.scrollHeight;
+}, 500);
+
+document.getElementById('questionIA').value = '';
+}
+
+window.deconnexion = function() {
+signOut(auth).then(() => window.location.href = './index.html')
+}
+</script>
+</body>
+</html>
