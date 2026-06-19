@@ -47,8 +47,8 @@
       <div id="recaptcha-container"></div>
 
       <div class="grid" style="margin-top:12px">
-        <button id="sendCodeBtn">Envoyer le code</button>
-        <button id="verifyCodeBtn">Vérifier et entrer</button>
+        <button id="sendCodeBtn" onclick="envoyerCode()">Envoyer le code</button>
+        <button id="verifyCodeBtn" onclick="verifierCode()">Vérifier et entrer</button>
       </div>
 
       <p class="small" id="authStatus"></p>
@@ -136,23 +136,19 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-analytics.js";
-    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCBYnjsBMJGeR57Kk3FX9zeIplE5EFkcIY",
       authDomain: "gmb24-raa.firebaseapp.com",
-      databaseURL: "https://gmb24-raa-default-rtdb.europe-west1.firebasedatabase.app",
       projectId: "gmb24-raa",
       storageBucket: "gmb24-raa.firebasestorage.app",
       messagingSenderId: "558507911211",
-      appId: "1:558507911211:web:5cdc99c082fe653684626e",
-      measurementId: "G-KVHFHTJVFN"
+      appId: "1:558507911211:web:5cdc99c082fe653684626e"
     };
 
     const app = initializeApp(firebaseConfig);
-    getAnalytics(app);
     const auth = getAuth(app);
 
     let confirmationResult;
@@ -161,25 +157,31 @@
 
     const fmt = n => Number(n || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+    // reCAPTCHA invisible
     window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      size: 'normal'
+      'size': 'normal',
+      'callback': (response) => {
+        console.log("reCAPTCHA validé");
+      }
     });
     window.recaptchaVerifier.render();
 
-    document.getElementById('sendCodeBtn').addEventListener('click', async () => {
+    // Fonction pour envoyer SMS
+    window.envoyerCode = async function() {
       const phoneNumber = document.getElementById('phoneNumber').value.trim();
       const status = document.getElementById('authStatus');
       if (!phoneNumber) return status.textContent = "Entre un numéro valide avec l'indicatif, ex: +228XXXXXXXX";
       try {
         status.textContent = "Envoi du code...";
         confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
-        status.textContent = "Code envoyé par SMS.";
+        status.textContent = "Code envoyé par SMS !";
       } catch (e) {
         status.textContent = "Erreur: " + e.message;
       }
-    });
+    }
 
-    document.getElementById('verifyCodeBtn').addEventListener('click', async () => {
+    // Fonction pour vérifier code
+    window.verifierCode = async function() {
       const code = document.getElementById('smsCode').value.trim();
       const status = document.getElementById('authStatus');
       if (!confirmationResult) return status.textContent = "D'abord envoie le code.";
@@ -187,10 +189,11 @@
         await confirmationResult.confirm(code);
         document.getElementById('loginCard').style.display = 'none';
         document.getElementById('appArea').style.display = 'block';
+        status.textContent = "Connecté !";
       } catch (e) {
         status.textContent = "Code incorrect: " + e.message;
       }
-    });
+    }
 
     window.addSale = function() {
       const name = document.getElementById('saleName').value.trim();
