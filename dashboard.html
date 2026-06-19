@@ -3,31 +3,77 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - GMB24</title>
+  <title>GMB24 - Dashboard</title>
   <style>
-    body { font-family: Arial; margin: 0; background: #f0f2f5; }
-    .header { background: #1a73e8; color: white; padding: 15px 20px; display: flex; justify-content: space-between; }
-    .container { padding: 30px; }
-    .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    button { padding: 10px 20px; background: #d32f2f; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial; margin: 0; background: #f5f7fa; }
+  .header { background: #1a73e8; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+  .container { padding: 15px; max-width: 650px; margin: auto; }
+  .card { background: white; padding: 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 15px; }
+    input, select, button { width: 100%; padding: 12px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
+    button { background: #1a73e8; color: white; border: none; cursor: pointer; font-weight: bold; }
+    button:hover { background: #1557b0; }
+  .btn-danger { background: #d32f2f; }
+  .btn-success { background: #2e7d32; }
+  .btn-warning { background: #f57c00; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .result { background: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #2e7d32; }
+  .alert { background: #ffebee; border-left: 4px solid #d32f2f; }
+  .warning { background: #fff3e0; border-left: 4px solid #f57c00; }
+    h3 { margin-top: 0; color: #1a73e8; font-size: 18px; }
+    table { width: 100%; font-size: 13px; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #f5f7fa; position: sticky; top: 0; }
+  .logout { width: auto; padding: 8px 15px; font-size: 14px; }
+  .badge { background: #1a73e8; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px; }
   </style>
 </head>
 <body>
   <div class="header">
-    <h2>GMB24 - Mon App</h2>
-    <button id="logout">Déconnexion</button>
+    <h2 style="margin:0; font-size:20px;">GMB24 <span class="badge" id="anneeBadge">2026</span></h2>
+    <button class="logout btn-danger" id="logout">Déconnexion</button>
   </div>
-  
+
   <div class="container">
     <div class="card">
-      <h3>Bienvenue 🔥</h3>
+      <h3>Paramètres boutique</h3>
       <p id="user-phone">Chargement...</p>
-      <p>Tu es connecté avec Firebase Phone Auth</p>
+      <label>Régime fiscal Togo :</label>
+      <select id="regime">
+        <option value="simplifie">Réal Simplifié - CA < 50M FCFA/an</option>
+        <option value="normal">Réal Normal - CA > 50M FCFA/an</option>
+      </select>
+      <small style="color:#666;">TVA: <span id="tvaInfo"></span> | Dernière MAJ: <span id="majInfo"></span></small>
     </div>
-    
+
     <div class="card">
-      <h3>Contenu de ton application</h3>
-      <p>Mets ici tes fonctionnalités GMB24</p>
+      <h3>1. Vente Express ⚡ 2 clics</h3>
+      <input type="text" id="produit" placeholder="Nom produit ex: Coca 50cl" />
+      <input type="number" id="prix_ht" placeholder="Prix HT en FCFA" />
+      <select id="tva"></select>
+      <button class="btn-success" onclick="ajouterVente()">+ Ajouter Vente</button>
+      <div id="resultat" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="card">
+      <h3>2. Journal Ventes du jour <button style="width:auto; float:right; padding:5px 10px; font-size:12px;" onclick="viderJournal()">Vider</button></h3>
+      <div style="overflow-x:auto;">
+        <table id="journal">
+          <thead><tr><th>Heure</th><th>Produit</th><th>HT</th><th>TVA</th><th>TTC</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button class="btn-warning" onclick="exporterTXT()">📄 Export TXT pour OTR</button>
+    </div>
+
+    <div class="card">
+      <h3>3. Bouclier Anti-Triche OTR 🚨</h3>
+      <small>Calcule ce que tu dois VRAIMENT payer selon la loi Togo</small>
+      <input type="number" id="ca_mois" placeholder="CA mensuel HT FCFA" />
+      <input type="number" id="achats_mois" placeholder="Achats HT FCFA - pour TVA déductible" />
+      <input type="number" id="otr_demande" placeholder="Montant que l’OTR te demande FCFA" />
+      <button onclick="calculerOTR()">Vérifier le calcul OTR</button>
+      <div id="impots" class="result" style="display:none;"></div>
     </div>
   </div>
 
@@ -35,29 +81,105 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+    // ===== CONFIG FISCALE TOGO - MODIFIE ICI CHAQUE ANNÉE =====
+    const configFiscale = {
+      annee: 2026,
+      pays: "Togo",
+      tva: {normal: 18, reduit: 10, exonere: 0},
+      impots: {
+        is_normal: 27, // IS Régime Normal
+        is_simplifie: 15, // IS Régime Simplifié
+        tpp_seuil: 50000000, // Seuil TPP 50M FCFA
+        tpp_taux: 1.5 // TPP 1.5%
+      },
+      derniere_mise_a_jour: "2026-04-19"
+    };
+    // ===== FIN CONFIG =====
+
     const firebaseConfig = {
       apiKey: "AIzaSyCBYnjsBMJGeR57Kk3FX9zeIplE5EFkcIY",
       authDomain: "gmb24-raa.firebaseapp.com",
       projectId: "gmb24-raa",
+      storageBucket: "gmb24-raa.firebasestorage.app",
+      messagingSenderId: "558507911211",
       appId: "1:558507911211:web:5cdc99c082fe653684626e"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    let journalVentes = JSON.parse(localStorage.getItem('journalVentes_'+new Date().toISOString().split('T')[0]) || '[]');
+
+    // Init interface avec config
+    document.getElementById('anneeBadge').textContent = configFiscale.annee;
+    document.getElementById('tvaInfo').textContent = configFiscale.tva.normal + '% / ' + configFiscale.tva.reduit + '%';
+    document.getElementById('majInfo').textContent = configFiscale.derniere_mise_a_jour;
+    document.getElementById('tva').innerHTML = `
+      <option value="${configFiscale.tva.normal}">TVA Normal ${configFiscale.tva.normal}%</option>
+      <option value="${configFiscale.tva.reduit}">TVA Réduit ${configFiscale.tva.reduit}% - Produits de base</option>
+      <option value="${configFiscale.tva.exonere}">Exonéré 0%</option>
+    `;
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
         document.getElementById('user-phone').textContent = 'Connecté: ' + user.phoneNumber;
+        afficherJournal();
       } else {
         window.location.href = 'index.html';
       }
     });
 
     document.getElementById('logout').addEventListener('click', () => {
-      signOut(auth).then(() => {
-        window.location.href = 'index.html';
-      });
+      signOut(auth).then(() => window.location.href = 'index.html');
     });
-  </script>
-</body>
-</html>
+
+    window.ajouterVente = function() {
+      const produit = document.getElementById('produit').value.trim() || 'Produit';
+      const prixHT = parseFloat(document.getElementById('prix_ht').value);
+      const tva = parseFloat(document.getElementById('tva').value);
+
+      if (!prixHT || prixHT <= 0) return alert('Entre un prix HT valide');
+
+      const montantTVA = Math.round(prixHT * tva / 100);
+      const prixTTC = prixHT + montantTVA;
+      const heure = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+
+      const vente = {heure, produit, prixHT, tva, montantTVA, prixTTC, date: new Date().toISOString()};
+      journalVentes.push(vente);
+      localStorage.setItem('journalVentes_'+new Date().toISOString().split('T')[0], JSON.stringify(journalVentes));
+
+      document.getElementById('resultat').style.display = 'block';
+      document.getElementById('resultat').innerHTML = `
+        ✅ Vendu: <b>${produit}</b><br>
+        TTC: ${prixTTC.toLocaleString()} FCFA | TVA ${tva}%: ${montantTVA.toLocaleString()} FCFA
+      `;
+
+      document.getElementById('produit').value = '';
+      document.getElementById('prix_ht').value = '';
+      afficherJournal();
+    }
+
+    function afficherJournal() {
+      const tbody = document.querySelector('#journal tbody');
+      tbody.innerHTML = '';
+      let totalHT = 0, totalTVA = 0, totalTTC = 0;
+
+      journalVentes.forEach(v => {
+        tbody.innerHTML += `<tr><td>${v.heure}</td><td>${v.produit}</td><td>${v.prixHT.toLocaleString()}</td><td>${v.montantTVA.toLocaleString()}</td><td><b>${v.prixTTC.toLocaleString()}</b></td></tr>`;
+        totalHT += v.prixHT;
+        totalTVA += v.montantTVA;
+        totalTTC += v.prixTTC;
+      });
+
+      if(journalVentes.length > 0) {
+        tbody.innerHTML += `<tr style="background:#e3f2fd; font-weight:bold"><td colspan="2">TOTAL JOUR</td><td>${totalHT.toLocaleString()}</td><td>${totalTVA.toLocaleString()}</td><td>${totalTTC.toLocaleString()}</td></tr>`;
+      }
+    }
+
+    window.assistantVoilà, tu colles ça d’un seul coup dans `dashboard.html` sur GitHub → `Valider` → test sur ton téléphone.
+
+**En 2027 si TVA passe à 19% :**
+Tu ouvres juste ce fichier, tu changes `normal: 18` en `normal: 19` + `annee: 2027` en haut dans `configFiscale`, tu valides. Toutes les boutiques sont à jour.
+
+Test "Bouclier Anti-Triche" : mets CA 500000, Achats 300000, OTR demande 80000 → tu verras direct si c’est trop.
+
+Ça marche chez toi?
