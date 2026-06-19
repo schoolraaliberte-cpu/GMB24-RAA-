@@ -4,26 +4,30 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Connexion SMS - GMB24</title>
+  <style>
+    body { font-family: Arial; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f5f5f5; }
+    .box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 300px; }
+    input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; border: 1px solid #ddd; }
+    button { background: #1a73e8; color: white; border: none; cursor: pointer; }
+    button:hover { background: #1557b0; }
+    h2 { text-align: center; color: #333; }
+  </style>
 </head>
 <body>
-  <h2>Connexion avec numéro +228</h2>
-  
-  <input type="tel" id="phone" placeholder="+22896766875" value="+228" />
-  <button id="btn-sms">Envoyer SMS</button>
-  
-  <br><br>
-  <input type="text" id="code" placeholder="Code de vérification" />
-  <button id="btn-code">Vérifier</button>
-
-  <!-- reCAPTCHA invisible obligatoire pour Firebase -->
-  <div id="recaptcha-container"></div>
+  <div class="box">
+    <h2>Connexion +228</h2>
+    <input type="tel" id="phone" placeholder="+22896766875" value="+228" />
+    <button id="btn-sms">Envoyer SMS</button>
+    <input type="text" id="code" placeholder="Code de vérification" />
+    <button id="btn-code">Vérifier</button>
+    <div id="recaptcha-container"></div>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 
-    // TA VRAIE CONFIG FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyCBYnjsBMJGeR57Kk3FX9zeIplE5EFkcIY",
       authDomain: "gmb24-raa.firebaseapp.com",
@@ -37,41 +41,33 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const analytics = getAnalytics(app);
+    getAnalytics(app);
 
-    // reCAPTCHA invisible
     window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
       'size': 'invisible',
-      'callback': () => {
-        console.log('reCAPTCHA prêt');
-      }
+      'callback': () => {}
     });
 
-    // Envoyer SMS
     document.getElementById('btn-sms').addEventListener('click', () => {
       const phoneNumber = document.getElementById('phone').value;
-      
       signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier)
         .then((confirmationResult) => {
           window.confirmationResult = confirmationResult;
-          alert('Code envoyé ! Pour le test tape: 703468');
+          alert('Code envoyé ! Test: 703468');
         })
         .catch((error) => {
           alert('Erreur: ' + error.message);
-          console.error(error);
         });
     });
 
-    // Vérifier code
     document.getElementById('btn-code').addEventListener('click', () => {
       const code = document.getElementById('code').value;
-      
       window.confirmationResult.confirm(code)
-        .then((result) => {
-          alert('Connecté avec succès ! ' + result.user.phoneNumber);
+        .then(() => {
+          window.location.href = 'dashboard.html';
         })
         .catch(() => {
-          alert('Code incorrect. Vérifie 703468');
+          alert('Code incorrect');
         });
     });
   </script>
