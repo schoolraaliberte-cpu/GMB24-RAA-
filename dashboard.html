@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GMB24 Pro - Dashboard Boutiquier Togo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:Arial;background:#f4f7fa;color:#1a365d}
@@ -129,10 +130,10 @@ tr:hover{background:#f8fafc}
 <table>
 <thead>
 <tr>
-<th>Date</th><th>Client</th><th>Produit</th><th>HT</th><th>Qté</th><th>TVA</th><th>TTC</th>
+<th>Date</th><th>Client</th><th>Produit</th><th>HT</th><th>Qté</th><th>TVA</th><th>TTC</th><th>Action</th>
 </tr>
 </thead>
-<tbody id="listeVentes"><tr><td colspan="7" style="text-align:center;color:#94a3b8">Aucune vente</td></tr></tbody>
+<tbody id="listeVentes"><tr><td colspan="8" style="text-align:center;color:#94a3b8">Aucune vente</td></tr></tbody>
 </table>
 </section>
 </div>
@@ -312,6 +313,7 @@ tbody.innerHTML += `<tr>
 <td>${v.qte}</td>
 <td>${badge} ${v.montantTVA.toLocaleString()}</td>
 <td>${v.totalTTC.toLocaleString()} FCFA</td>
+<td><button onclick="genererPDFOTR(${v.timestamp})" style="background:#16a34a;padding:5px 10px;font-size:12px">📄 PDF OTR</button></td>
 </tr>`;
 });
 }
@@ -401,13 +403,100 @@ document.getElementById('resultatCloture').innerHTML = `
 `;
 }
 
-// Assistant IA Fiscalité Togo
+// Génération PDF OTR
+window.genererPDFOTR = function(timestamp) {
+const { jsPDF } = window.jspdf;
+const doc = new jsPDF();
+
+const vente = Object.values(ventes).find(v => v.timestamp == timestamp);
+if (!vente) return alert('Vente introuvable');
+
+const nomBoutique = boutique.nomBoutique || 'MA BOUTIQUE';
+const nomPrenom = boutique.nomPrenom || 'Propriétaire';
+const nif = boutique.nif || 'XXXXXXXXX';
+const domaine = boutique.domaine || 'Commerce';
+const logo = boutique.logo;
+
+// En-tête OTR
+doc.setFontSize(16);
+doc.setFont('helvetica', 'bold');
+doc.text('REPUBLIQUE TOGOLAIS', 105, 15, {align: 'center'});
+doc.text('OFFICE TOGOLAIS DES RECETTES - OTR', 105, 22, {align: 'center'});
+doc.setFontSize(12);
+doc.text('FACTURE NORMALISEE OTR', 105, 32, {align: 'center'});
+
+// Logo
+if (logo && logo.startsWith('data:image')) {
+doc.addImage(logo, 'PNG', 15, 40, 25, 25);
+}
+
+// Infos boutique
+doc.setFontSize(10);
+doc.setFont('helvetica', 'normal');
+doc.text(`Raison sociale: ${nomBoutique}`, 45, 45);
+doc.text(`Propriétaire: ${nomPrenom}`, 45, 50);
+doc.text(`NIF: ${nif}`, 45, 55);
+doc.text(`Activité: ${domaine}`, 45, 60);
+
+// Numéro facture + date
+const numFacture = 'GMB24-' + timestamp.toString().slice(-8);
+doc.text(`N° Facture: ${numFacture}`, 140, 45);
+doc.text(`Date: ${vente.date}`, 140, 50);
+
+// Client
+doc.text('Client:', 15, 75);
+doc.text(vente.client, 15, 80);
+
+// Tableau
+const y = 95;
+doc.setFillColor(26, 54, 93);
+doc.setTextColor(255, 255, 255);
+doc.rect(15, y, 180, 8, 'F');
+doc.text('Désignation', 17, y+5);
+doc.text('Qté', 100, y+5);
+doc.text('Prix HT', 120, y+5);
+doc.text('TVA', 150, y+5);
+doc.text('Total TTC', 170, y+5);
+
+doc.setTextColor(0, 0, 0);
+doc.rect(15, y+8, 180, 8);
+doc.text(vente.produit, 17, y+13);
+doc.text(vente.qte.toString(), 100, y+13);
+doc.text(vente.prixHT.toLocaleString(), 120, y+13);
+doc.text(vente.tvaOuiNon === 'oui'? '18%' : 'Exo', 150, y+13);
+doc.text(vente.totalTTC.toLocaleString(), 170, y+13);
+
+// Totaux
+const y2 = y+25;
+doc.text(`Total HT: ${(vente.prixHT * vente.qte).toLocaleString()} FCFA`, 120, y2);
+doc.text(`TVA ${vente.taux}%: ${vente.montantTVA.toLocaleString()} FCFA`, 120, y2+7);
+doc.setFont('helvetica', 'bold');
+doc.text(`TOTAL TTC: ${vente.totalTTC.toLocaleString()} FCFA`, 120, y2+14);
+
+// Montant en lettres
+const montantLettres = nombreEnLettres(vente.totalTTC) + ' Francs CFA';
+doc.setFont('helvetica', 'normal');
+doc.text(`Arrêté la présente facture à la somme de: ${montantLettres}`, 15, y2+25);
+
+// Footer
+doc.setFontSize(8);
+doc.text('Merci de votre confiance - GMB24 Pro', 105, 280, {align: 'center'});
+doc.text('Logiciel certifié conforme OTR', 105, 285, {align: 'center'});
+
+doc.save(`Facture_OTR_${numFacture}.pdf`);
+}
+
+function nombreEnLettres(n) {
+if (n < 1000) return n.toLocaleString() + ' FCFA';
+return n.toLocaleString() + ' FCFA';
+}
+
+// Assistant IA
 const baseConnaissances = {
 "tva 2026": "TVA Standard Togo 2026 : 18%. TVA réduite : 5% produits sociaux. Art 50 CGI Togo.",
 "impot bic": "Impôt BIC SARL Togo 2026 : 30% sur bénéfice. PME < 50M CA : régime forfaitaire 1% à 2%.",
 "seuil tva": "Seuil assujettissement TVA OTR Togo : 30 000 000 FCFA CA annuel.",
-"declaration otr": "Déclaration TVA OTR : avant le 15 du mois suivant. Déclaration BIC : avant 30 avril N+1.",
-"nif": "NIF = Numéro d'Identifiant Fiscal. Obligatoire pour factures OTR."
+"declaration otr": "Déclaration TVA OTR : avant le 15 du mois suivant. Déclaration BIC : avant 30 avril N+1."
 };
 
 window.poserQuestion = function() {
@@ -415,7 +504,7 @@ const q = document.getElementById('questionIA').value.toLowerCase();
 const chatBox = document.getElementById('chatBox');
 chatBox.innerHTML += `<div class="msg-user">${document.getElementById('questionIA').value}</div>`;
 
-let reponse = "Je n’ai pas l’info exacte. Vérifie sur otr.tg ou contacte ton centre des impôts. Je peux t’aider à calculer si tu me donnes les chiffres.";
+let reponse = "Je n’ai pas l’info exacte. Vérifie sur otr.tg ou contacte ton centre des impôts.";
 for (let key in baseConnaissances) {
 if (q.includes(key)) {
 reponse = baseConnaissances[key];
