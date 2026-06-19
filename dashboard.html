@@ -1,239 +1,313 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GMB24 - Dashboard</title>
-  <style>
-    * { box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Arial; margin: 0; background: #f5f7fa; }
- .header { background: #1a73e8; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
- .container { padding: 15px; max-width: 650px; margin: auto; }
- .card { background: white; padding: 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 15px; }
-    input, select, button { width: 100%; padding: 12px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
-    button { background: #1a73e8; color: white; border: none; cursor: pointer; font-weight: bold; }
-    button:hover { background: #1557b0; }
- .btn-danger { background: #d32f2f; }
- .btn-success { background: #2e7d32; }
- .btn-warning { background: #f57c00; }
- .result { background: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #2e7d32; }
- .alert { background: #ffebee; border-left: 4px solid #d32f2f; }
-    h3 { margin-top: 0; color: #1a73e8; font-size: 18px; }
-    table { width: 100%; font-size: 13px; border-collapse: collapse; margin-top: 10px; }
-    th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
-    th { background: #f5f7fa; }
- .logout { width: auto; padding: 8px 15px; font-size: 14px; }
- .badge { background: #1a73e8; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GMB24 Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+body {font-family: Arial, sans-serif; background:#f5f5f5; margin:0; padding:15px;}
+.card {background:white; padding:15px; margin-bottom:15px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+h3 {margin-top:0; color:#2c3e50;}
+input, button {width:100%; padding:10px; margin:5px 0; border:1px solid #ddd; border-radius:5px; box-sizing:border-box;}
+button {background:#3498db; color:white; border:none; cursor:pointer; font-weight:bold;}
+.btn-success {background:#27ae60;}
+.btn-warning {background:#f39c12;}
+label {font-size:13px; display:block; margin:5px 0;}
+</style>
 </head>
 <body>
-  <div class="header">
-    <h2 style="margin:0; font-size:20px;">GMB24 <span class="badge" id="anneeBadge">2026</span></h2>
-    <button class="logout btn-danger" id="logout">Deconnexion</button>
-  </div>
 
-  <div class="container">
-    <div class="card">
-      <h3>Parametres boutique</h3>
-      <p id="user-phone">Chargement...</p>
-      <label>Regime fiscal Togo :</label>
-      <select id="regime">
-        <option value="simplifie">Real Simplifie - CA < 50M FCFA/an</option>
-        <option value="normal">Real Normal - CA > 50M FCFA/an</option>
-      </select>
-      <small style="color:#666;">TVA: <span id="tvaInfo"></span> | Derniere MAJ: <span id="majInfo"></span></small>
-    </div>
+<div class="card">
+  <h3>1. Journal Ventes du jour</h3>
+  <input type="text" id="produit" placeholder="Nom produit: Coca, Pain..." />
+  <input type="number" id="prix_vente" placeholder="Prix de vente FCFA" />
+  <label><input type="checkbox" id="tva_vente" checked /> Appliquer TVA 18% sur cette vente</label>
+  <button onclick="enregistrerVente()">+ Enregistrer Vente</button>
+  <div id="liste_ventes" style="margin-top:10px; font-size:13px;"></div>
+</div>
 
-    <div class="card">
-      <h3>1. Vente Express ⚡ 2 clics</h3>
-      <input type="text" id="produit" placeholder="Nom produit ex: Coca 50cl" />
-      <input type="number" id="prix_ht" placeholder="Prix HT en FCFA" />
-      <select id="tva"></select>
-      <button class="btn-success" onclick="ajouterVente()">+ Ajouter Vente</button>
-      <div id="resultat" class="result" style="display:none;"></div>
-    </div>
+<div class="card">
+  <h3>2. Dépenses/Achats du mois 💸</h3>
+  <input type="text" id="libelle_depense" placeholder="Libellé: Loyer Avril, Essence..." />
+  <input type="number" id="montant_depense" placeholder="Montant FCFA TTC si TVA, sinon HT" />
+  <label><input type="checkbox" id="tva_depense" /> Cette dépense a TVA 18% récupérable</label>
+  <button onclick="ajouterDepense()">+ Ajouter Dépense</button>
+  <div id="liste_depenses" style="margin-top:10px; font-size:13px;"></div>
+</div>
 
-    <div class="card">
-      <h3>2. Journal Ventes du jour <button style="width:auto; float:right; padding:5px 10px; font-size:12px;" onclick="viderJournal()">Vider</button></h3>
-      <div style="overflow-x:auto;">
-        <table id="journal">
-          <thead><tr><th>Heure</th><th>Produit</th><th>HT</th><th>TVA</th><th>TTC</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <button class="btn-warning" onclick="exporterTXT()">📄 Export TXT pour OTR</button>
-    </div>
+<div class="card">
+  <h3>3. Export OTR Mensuel</h3>
+  <button class="btn-warning" onclick="exporterPDFMois()">📄 PDF OTR - TVA au choix</button>
+</div>
 
-    <div class="card">
-      <h3>3. Bouclier Anti-Triche OTR 🚨</h3>
-      <small>Calcule ce que tu dois VRAIMENT payer selon la loi Togo</small>
-      <input type="number" id="ca_mois" placeholder="CA mensuel HT FCFA" />
-      <input type="number" id="achats_mois" placeholder="Achats HT FCFA - pour TVA deductible" />
-      <input type="number" id="otr_demande" placeholder="Montant que l'OTR te demande FCFA" />
-      <button onclick="calculerOTR()">Verifier le calcul OTR</button>
-      <div id="impots" class="result" style="display:none;"></div>
-    </div>
-  </div>
+<div class="card">
+  <h3>4. Calculateur OTR</h3>
+  <input type="number" id="tva_collectee" placeholder="TVA Collectée" readonly />
+  <input type="number" id="tva_deductible" placeholder="TVA Déductible" readonly />
+  <input type="number" id="benefice_ht" placeholder="Bénéfice HT" readonly />
+  <button class="btn-success" onclick="calculerOTR()">Calculer TVA + IS</button>
+  <div id="resultat_otr" style="margin-top:10px; font-weight:bold;"></div>
+</div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+<div class="card">
+  <h3>5. Sauvegarde & Archives</h3>
+  <button class="btn-success" onclick="telechargerBackup()">📦 Backup JSON</button>
+  <button class="btn-warning" onclick="afficherArchives()">📁 Voir Archives</button>
+  <div id="liste_archives" style="margin-top:10px; font-size:12px;"></div>
+</div>
 
-    // ===== CONFIG FISCALE TOGO - MODIFIE ICI CHAQUE ANNEE =====
-    const configFiscale = {
-      annee: 2026,
-      pays: "Togo",
-      tva: {normal: 18, reduit: 10, exonere: 0},
-      impots: {
-        is_normal: 27,
-        is_simplifie: 15,
-        tpp_seuil: 50000000,
-        tpp_taux: 1.5
-      },
-      derniere_mise_a_jour: "2026-04-19"
-    };
-    // ===== FIN CONFIG =====
+<script>
+let ventesJour = JSON.parse(localStorage.getItem('ventesJour_'+new Date().toDateString()) || '[]');
+let depensesMois = JSON.parse(localStorage.getItem('depensesMois_'+new Date().toISOString().slice(0,7)) || '[]');
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCBYnjsBMJGeR57Kk3FX9zeIplE5EFkcIY",
-      authDomain: "gmb24-raa.firebaseapp.com",
-      projectId: "gmb24-raa",
-      storageBucket: "gmb24-raa.firebasestorage.app",
-      messagingSenderId: "558507911211",
-      appId: "1:558507911211:web:5cdc99c082fe653684626e"
-    };
+// 1. Vente avec TVA au choix
+function enregistrerVente() {
+  const produit = document.getElementById('produit').value.trim();
+  const prix = parseFloat(document.getElementById('prix_vente').value);
+  const aTVA = document.getElementById('tva_vente').checked;
+  
+  if (!produit || !prix || prix <= 0) return alert('Remplis produit + prix');
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    let journalVentes = JSON.parse(localStorage.getItem('journalVentes_'+new Date().toISOString().split('T')[0]) || '[]');
+  let prixHT, montantTVA, prixTTC;
+  if (aTVA) {
+    prixHT = Math.round(prix / 1.18);
+    montantTVA = prix - prixHT;
+    prixTTC = prix;
+  } else {
+    prixHT = prix;
+    montantTVA = 0;
+    prixTTC = prix;
+  }
 
-    // Init interface avec config - SANS ACCENTS pour eviter bugs
-    document.getElementById('anneeBadge').textContent = configFiscale.annee;
-    document.getElementById('tvaInfo').textContent = configFiscale.tva.normal + '% / ' + configFiscale.tva.reduit + '%';
-    document.getElementById('majInfo').textContent = configFiscale.derniere_mise_a_jour;
-    document.getElementById('tva').innerHTML = `
-      <option value="${configFiscale.tva.normal}">TVA Normal ${configFiscale.tva.normal}%</option>
-      <option value="${configFiscale.tva.reduit}">TVA Reduit ${configFiscale.tva.reduit}% - Produits de base</option>
-      <option value="${configFiscale.tva.exonere}">Exonere 0%</option>
-    `;
+  ventesJour.push({produit, prixHT, prixTTC, montantTVA, aTVA, date: new Date().toISOString()});
+  localStorage.setItem('ventesJour_'+new Date().toDateString(), JSON.stringify(ventesJour));
+  document.getElementById('produit').value = '';
+  document.getElementById('prix_vente').value = '';
+  afficherVentes();
+}
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        document.getElementById('user-phone').textContent = 'Connecte: ' + user.phoneNumber;
-        afficherJournal();
-      } else {
-        window.location.href = 'index.html';
+// 2. Dépense avec TVA au choix
+function ajouterDepense() {
+  const libelle = document.getElementById('libelle_depense').value.trim();
+  const montant = parseFloat(document.getElementById('montant_depense').value);
+  const aTVA = document.getElementById('tva_depense').checked;
+  
+  if (!libelle || !montant || montant <= 0) return alert('Remplis libellé + montant');
+
+  let montantHT, montantTVA, montantTTC;
+  if (aTVA) {
+    montantHT = Math.round(montant / 1.18);
+    montantTVA = montant - montantHT;
+    montantTTC = montant;
+  } else {
+    montantHT = montant;
+    montantTVA = 0;
+    montantTTC = montant;
+  }
+
+  depensesMois.push({libelle, montantHT, montantTTC, montantTVA, aTVA, date: new Date().toISOString()});
+  localStorage.setItem('depensesMois_'+new Date().toISOString().slice(0,7), JSON.stringify(depensesMois));
+  document.getElementById('libelle_depense').value = '';
+  document.getElementById('montant_depense').value = '';
+  afficherDepenses();
+}
+
+function viderDepenses() {
+  if(confirm('Supprimer toutes les dépenses?')) {
+    depensesMois = [];
+    localStorage.removeItem('depensesMois_'+new Date().toISOString().slice(0,7));
+    afficherDepenses();
+  }
+}
+
+function afficherVentes() {
+  const div = document.getElementById('liste_ventes');
+  let html = '', total = 0, tva = 0;
+  ventesJour.forEach(v => {
+    html += `${v.produit}: ${v.prixTTC.toLocaleString()} FCFA ${v.aTVA ? '(TVA 18%)' : '(Sans TVA)'}<br>`;
+    total += v.prixTTC;
+    tva += v.montantTVA;
+  });
+  if (ventesJour.length > 0) html += `<b>Total: ${total.toLocaleString()} | TVA Collectée: ${tva.toLocaleString()}</b>`;
+  div.innerHTML = html;
+}
+
+function afficherDepenses() {
+  const div = document.getElementById('liste_depenses');
+  let html = '', total = 0, tva = 0;
+  depensesMois.forEach(d => {
+    html += `${new Date(d.date).toLocaleDateString('fr-FR')} - ${d.libelle}: ${d.montantTTC.toLocaleString()} ${d.aTVA ? '(TVA:'+d.montantTVA.toLocaleString()+')' : '(Sans TVA)'}<br>`;
+    total += d.montantTTC;
+    tva += d.montantTVA;
+  });
+  if (depensesMois.length > 0) html += `<b>Total: ${total.toLocaleString()} | TVA Déductible: ${tva.toLocaleString()}</b>`;
+  div.innerHTML = html;
+}
+
+// 3. PDF avec TVA au choix
+window.exporterPDFMois = async function() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const moisActuel = new Date().toISOString().slice(0, 7);
+  let ventesMois = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith('ventesJour_')) {
+      const vJour = JSON.parse(localStorage.getItem(key));
+      if (vJour.length > 0 && new Date(vJour[0].date).toISOString().slice(0,7) === moisActuel) {
+        ventesMois = ventesMois.concat(vJour);
       }
+    }
+  }
+  const depensesMois = JSON.parse(localStorage.getItem('depensesMois_' + moisActuel) || '[]');
+
+  // Calculs
+  const totalHT = ventesMois.reduce((sum, v) => sum + v.prixHT, 0);
+  const totalCA = ventesMois.reduce((sum, v) => sum + v.prixTTC, 0);
+  const tvaCollectee = ventesMois.reduce((sum, v) => sum + v.montantTVA, 0);
+  
+  const totalDepHT = depensesMois.reduce((sum, d) => sum + d.montantHT, 0);
+  const totalDepTTC = depensesMois.reduce((sum, d) => sum + d.montantTTC, 0);
+  const tvaDeductible = depensesMois.reduce((sum, d) => sum + d.montantTVA, 0);
+  
+  const beneficeHT = totalHT - totalDepHT;
+  const tvaAPayer = Math.max(0, tvaCollectee - tvaDeductible);
+
+  // PDF
+  doc.setFontSize(18);
+  doc.text('GMB24 - DECLARATION OTR', 105, 20, { align: 'center' });
+  doc.setFontSize(11);
+  doc.text('Mois: ' + moisActuel, 20, 35);
+
+  doc.setFontSize(12);
+  doc.text('RESUME FISCAL MENSUEL', 20, 50);
+  doc.line(20, 53, 190, 53);
+  doc.text('CA HT: ' + totalHT.toLocaleString() + ' FCFA', 20, 62);
+  doc.text('Dépenses HT: ' + totalDepHT.toLocaleString() + ' FCFA', 20, 69);
+  doc.setFont(undefined, 'bold');
+  doc.text('BÉNÉFICE HT: ' + beneficeHT.toLocaleString() + ' FCFA', 20, 78);
+  doc.setFont(undefined, 'normal');
+  
+  doc.text('TVA Collectée: ' + tvaCollectee.toLocaleString() + ' FCFA', 20, 88);
+  doc.text('TVA Déductible: ' + tvaDeductible.toLocaleString() + ' FCFA', 20, 95);
+  doc.setFont(undefined, 'bold');
+  doc.text('TVA À PAYER OTR: ' + tvaAPayer.toLocaleString() + ' FCFA', 20, 104);
+
+  // Ventes détail
+  let y = 120;
+  doc.setFontSize(10);
+  doc.text('VENTES DETAIL', 20, y);
+  y += 8;
+  doc.text('Produit', 20, y);
+  doc.text('HT', 90, y);
+  doc.text('TVA', 120, y);
+  doc.text('TTC', 150, y);
+  doc.text('Type', 170, y);
+  doc.line(20, y+3, 190, y+3);
+  y += 10;
+
+  ventesMois.forEach(v => {
+    if (y > 265) { doc.addPage(); y = 20; }
+    doc.text(v.produit.substring(0, 25), 20, y);
+    doc.text(v.prixHT.toLocaleString(), 90, y);
+    doc.text(v.montantTVA.toLocaleString(), 120, y);
+    doc.text(v.prixTTC.toLocaleString(), 150, y);
+    doc.text(v.aTVA ? 'TVA 18%' : 'Exo TVA', 170, y);
+    y += 7;
+  });
+
+  // Dépenses détail
+  y += 15;
+  if (depensesMois.length > 0) {
+    doc.text('DÉPENSES DETAIL', 20, y);
+    y += 8;
+    doc.text('Date', 20, y);
+    doc.text('Libellé', 50, y);
+    doc.text('HT', 110, y);
+    doc.text('TVA', 140, y);
+    doc.text('TTC', 170, y);
+    doc.line(20, y+3, 190, y+3);
+    y += 10;
+    
+    depensesMois.forEach(d => {
+      if (y > 265) { doc.addPage(); y = 20; }
+      doc.text(new Date(d.date).toLocaleDateString('fr-FR'), 20, y);
+      doc.text(d.libelle.substring(0, 25), 50, y);
+      doc.text(d.montantHT.toLocaleString(), 110, y);
+      doc.text(d.montantTVA.toLocaleString(), 140, y);
+      doc.text(d.montantTTC.toLocaleString(), 170, y);
+      y += 7;
     });
+  }
 
-    document.getElementById('logout').addEventListener('click', () => {
-      signOut(auth).then(() => window.location.href = 'index.html');
-    });
+  doc.save('GMB24_Declaration_' + moisActuel + '.pdf');
 
-    window.ajouterVente = function() {
-      const produit = document.getElementById('produit').value.trim() || 'Produit';
-      const prixHT = parseFloat(document.getElementById('prix_ht').value);
-      const tva = parseFloat(document.getElementById('tva').value);
+  // Remplir calculateur
+  document.getElementById('tva_collectee').value = tvaCollectee;
+  document.getElementById('tva_deductible').value = tvaDeductible;
+  document.getElementById('benefice_ht').value = beneficeHT > 0 ? beneficeHT : 0;
+  alert('PDF téléchargé! TVA à payer: ' + tvaAPayer.toLocaleString() + ' FCFA');
+  
+  sauvegarderArchives(moisActuel, ventesMois, depensesMois, totalHT, totalDepHT, tvaCollectee, tvaDeductible, tvaAPayer);
+}
 
-      if (!prixHT || prixHT <= 0) return alert('Entre un prix HT valide');
+function sauvegarderArchives(mois, ventes, depenses, totalHT, totalDepHT, tvaColl, tvaDed, tvaPayer) {
+  const archive = {mois, ventes, depenses, totalVentesHT: totalHT, totalDepensesHT: totalDepHT, tvaCollectee: tvaColl, tvaDeductible: tvaDed, tvaAPayer: tvaPayer};
+  localStorage.setItem('archive_GMB24_' + mois, JSON.stringify(archive));
+}
 
-      const montantTVA = Math.round(prixHT * tva / 100);
-      const prixTTC = prixHT + montantTVA;
-      const heure = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
-
-      const vente = {heure, produit, prixHT, tva, montantTVA, prixTTC, date: new Date().toISOString()};
-      journalVentes.push(vente);
-      localStorage.setItem('journalVentes_'+new Date().toISOString().split('T')[0], JSON.stringify(journalVentes));
-
-      document.getElementById('resultat').style.display = 'block';
-      document.getElementById('resultat').innerHTML = `
-        OK Vendu: <b>${produit}</b><br>
-        TTC: ${prixTTC.toLocaleString()} FCFA | TVA ${tva}%: ${montantTVA.toLocaleString()} FCFA
-      `;
-
-      document.getElementById('produit').value = '';
-      document.getElementById('prix_ht').value = '';
-      afficherJournal();
+window.telechargerBackup = function() {
+  let backup = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith('ventesJour_') || key.startsWith('depensesMois_') || key.startsWith('archive_GMB24_')) {
+      backup[key] = localStorage.getItem(key);
     }
+  }
+  const blob = new Blob([JSON.stringify(backup)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'GMB24_BACKUP_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+}
 
-    function afficherJournal() {
-      const tbody = document.querySelector('#journal tbody');
-      tbody.innerHTML = '';
-      let totalHT = 0, totalTVA = 0, totalTTC = 0;
-
-      journalVentes.forEach(v => {
-        tbody.innerHTML += `<tr><td>${v.heure}</td><td>${v.produit}</td><td>${v.prixHT.toLocaleString()}</td><td>${v.montantTVA.toLocaleString()}</td><td><b>${v.prixTTC.toLocaleString()}</b></td></tr>`;
-        totalHT += v.prixHT;
-        totalTVA += v.montantTVA;
-        totalTTC += v.prixTTC;
-      });
-
-      if(journalVentes.length > 0) {
-        tbody.innerHTML += `<tr style="background:#e3f2fd; font-weight:bold"><td colspan="2">TOTAL JOUR</td><td>${totalHT.toLocaleString()}</td><td>${totalTVA.toLocaleString()}</td><td>${totalTTC.toLocaleString()}</td></tr>`;
-      }
+window.afficherArchives = function() {
+  const div = document.getElementById('liste_archives');
+  let html = '<b>Archives:</b><br>';
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith('archive_GMB24_')) {
+      const a = JSON.parse(localStorage.getItem(key));
+      html += `📄 ${a.mois} : TVA ${a.tvaAPayer.toLocaleString()} FCFA <button style="padding:2px 6px; font-size:11px;" onclick="exporterPDFArchive('${key}')">PDF</button><br>`;
     }
+  }
+  div.innerHTML = html;
+}
 
-    window.calculerOTR = function() {
-      const ca = parseFloat(document.getElementById('ca_mois').value) || 0;
-      const achats = parseFloat(document.getElementById('achats_mois').value) || 0;
-      const otrDemande = parseFloat(document.getElementById('otr_demande').value) || 0;
-      const regime = document.getElementById('regime').value;
+window.exporterPDFArchive = function(key) {
+  const a = JSON.parse(localStorage.getItem(key));
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.text('ARCHIVE ' + a.mois, 20, 20);
+  doc.text('Bénéfice HT: ' + (a.totalVentesHT - a.totalDepensesHT).toLocaleString(), 20, 30);
+  doc.text('TVA à payer: ' + a.tvaAPayer.toLocaleString(), 20, 37);
+  doc.save('ARCHIVE_' + a.mois + '.pdf');
+}
 
-      if (!ca) return alert('Entre ton CA mensuel');
+function calculerOTR() {
+  const tvaColl = parseFloat(document.getElementById('tva_collectee').value) || 0;
+  const tvaDed = parseFloat(document.getElementById('tva_deductible').value) || 0;
+  const benefice = parseFloat(document.getElementById('benefice_ht').value) || 0;
+  const tvaPayer = Math.max(0, tvaColl - tvaDed);
+  const is = Math.max(0, benefice * 0.25);
+  document.getElementById('resultat_otr').innerHTML =
+    `TVA à payer: ${tvaPayer.toLocaleString()} FCFA<br>IS 25%: ${is.toLocaleString()} FCFA<br><b>Total: ${(tvaPayer+is).toLocaleString()} FCFA</b>`;
+}
 
-      const tvaCollectee = ca * configFiscale.tva.normal / 100;
-      const tvaDeductible = achats * configFiscale.tva.normal / 100;
-      const tvaReverser = Math.max(0, tvaCollectee - tvaDeductible);
-
-      const tauxIS = regime === 'normal'? configFiscale.impots.is_normal : configFiscale.impots.is_simplifie;
-      const beneficeAnnuel = (ca - achats) * 12;
-      const isMensuel = beneficeAnnuel * tauxIS / 100 / 12;
-
-      const tppMensuel = (ca * 12 > configFiscale.impots.tpp_seuil)? ca * configFiscale.impots.tpp_taux / 100 : 0;
-
-      const totalMensuel = tvaReverser + isMensuel + tppMensuel;
-      const difference = otrDemande - totalMensuel;
-
-      document.getElementById('impots').style.display = 'block';
-      document.getElementById('impots').className = difference > 0? 'result alert' : 'result';
-
-      document.getElementById('impots').innerHTML = `
-        <b>Calcul GMB24 - Annee ${configFiscale.annee}</b><br><br>
-        TVA a reverser: ${Math.round(tvaReverser).toLocaleString()} FCFA<br>
-        IS ${tauxIS}% /mois: ${Math.round(isMensuel).toLocaleString()} FCFA<br>
-        TPP /mois: ${Math.round(tppMensuel).toLocaleString()} FCFA<br>
-        <hr>
-        <b>TOTAL A PAYER: ${Math.round(totalMensuel).toLocaleString()} FCFA</b><br><br>
-        ${otrDemande > 0? `
-          OTR demande: ${otrDemande.toLocaleString()} FCFA<br>
-          <b style="color:${difference > 0? 'red' : 'green'}">
-          Difference: ${difference > 0? '+' : ''}${Math.round(difference).toLocaleString()} FCFA ${difference > 0? '🚨 TROP CHER' : 'OK'}
-          </b>` : ''}
-        <br><small>Base: config interne | Garde ce calcul comme preuve</small>
-      `;
-    }
-
-    window.exporterTXT = function() {
-      let contenu = 'GMB24 - JOURNAL VENTES\nDate: ' + new Date().toLocaleDateString('fr-FR') + '\n\n';
-      journalVentes.forEach(v => {
-        contenu += `${v.heure} | ${v.produit} | HT:${v.prixHT} | TVA:${v.montantTVA} | TTC:${v.prixTTC}\n`;
-      });
-      const blob = new Blob([contenu], {type: 'text/plain'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'Journal_Ventes_OTR.txt';
-      a.click();
-      alert('Fichier exporte! Envoie ca a lOTR comme preuve.');
-    }
-
-    window.viderJournal = function() {
-      if(confirm('Supprimer toutes les ventes du jour?')) {
-        journalVentes = [];
-        localStorage.removeItem('journalVentes_'+new Date().toISOString().split('T')[0]);
-        afficherJournal();
-      }
-    }
-  </script>
+afficherVentes();
+afficherDepenses();
+</script>
 </body>
 </html>
