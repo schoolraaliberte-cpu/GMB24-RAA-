@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - GMB24</title>
+  <style>
+    body { font-family: Arial; margin: 0; background: #f0f2f5; }
+    .header { background: #1a73e8; color: white; padding: 15px 20px; display: flex; justify-content: space-between; }
+    .container { padding: 30px; }
+    .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    button { padding: 10px 20px; background: #d32f2f; color: white; border: none; border-radius: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>GMB24 - Mon App</h2>
+    <button id="logout">Déconnexion</button>
+  </div>
+  
+  <div class="container">
+    <div class="card">
+      <h3>Bienvenue 🔥</h3>
+      <p id="user-phone">Chargement...</p>
+      <p>Tu es connecté avec Firebase Phone Auth</p>
+    </div>
+    
+    <div class="card">
+      <h3>Contenu de ton application</h3>
+      <p>Mets ici tes fonctionnalités GMB24</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCBYnjsBMJGeR57Kk3FX9zeIplE5EFkcIY",
+      authDomain: "gmb24-raa.firebaseapp.com",
+      projectId: "gmb24-raa",
+      appId: "1:558507911211:web:5cdc99c082fe653684626e"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById('user-phone').textContent = 'Connecté: ' + user.phoneNumber;
+      } else {
+        window.location.href = 'index.html';
+      }
+    });
+
+    document.getElementById('logout').addEventListener('click', () => {
+      signOut(auth).then(() => {
+        window.location.href = 'index.html';
+      });
+    });
+  </script>
+</body>
+</html>
