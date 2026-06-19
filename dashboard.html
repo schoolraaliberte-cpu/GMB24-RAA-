@@ -7,43 +7,41 @@
   <style>
     * { box-sizing: border-box; }
     body { font-family: 'Segoe UI', Arial; margin: 0; background: #f5f7fa; }
-  .header { background: #1a73e8; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
-  .container { padding: 15px; max-width: 650px; margin: auto; }
-  .card { background: white; padding: 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 15px; }
+ .header { background: #1a73e8; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+ .container { padding: 15px; max-width: 650px; margin: auto; }
+ .card { background: white; padding: 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 15px; }
     input, select, button { width: 100%; padding: 12px; margin: 6px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
     button { background: #1a73e8; color: white; border: none; cursor: pointer; font-weight: bold; }
     button:hover { background: #1557b0; }
-  .btn-danger { background: #d32f2f; }
-  .btn-success { background: #2e7d32; }
-  .btn-warning { background: #f57c00; }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .result { background: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #2e7d32; }
-  .alert { background: #ffebee; border-left: 4px solid #d32f2f; }
-  .warning { background: #fff3e0; border-left: 4px solid #f57c00; }
+ .btn-danger { background: #d32f2f; }
+ .btn-success { background: #2e7d32; }
+ .btn-warning { background: #f57c00; }
+ .result { background: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #2e7d32; }
+ .alert { background: #ffebee; border-left: 4px solid #d32f2f; }
     h3 { margin-top: 0; color: #1a73e8; font-size: 18px; }
     table { width: 100%; font-size: 13px; border-collapse: collapse; margin-top: 10px; }
     th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
-    th { background: #f5f7fa; position: sticky; top: 0; }
-  .logout { width: auto; padding: 8px 15px; font-size: 14px; }
-  .badge { background: #1a73e8; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px; }
+    th { background: #f5f7fa; }
+ .logout { width: auto; padding: 8px 15px; font-size: 14px; }
+ .badge { background: #1a73e8; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px; }
   </style>
 </head>
 <body>
   <div class="header">
     <h2 style="margin:0; font-size:20px;">GMB24 <span class="badge" id="anneeBadge">2026</span></h2>
-    <button class="logout btn-danger" id="logout">Déconnexion</button>
+    <button class="logout btn-danger" id="logout">Deconnexion</button>
   </div>
 
   <div class="container">
     <div class="card">
-      <h3>Paramètres boutique</h3>
+      <h3>Parametres boutique</h3>
       <p id="user-phone">Chargement...</p>
-      <label>Régime fiscal Togo :</label>
+      <label>Regime fiscal Togo :</label>
       <select id="regime">
-        <option value="simplifie">Réal Simplifié - CA < 50M FCFA/an</option>
-        <option value="normal">Réal Normal - CA > 50M FCFA/an</option>
+        <option value="simplifie">Real Simplifie - CA < 50M FCFA/an</option>
+        <option value="normal">Real Normal - CA > 50M FCFA/an</option>
       </select>
-      <small style="color:#666;">TVA: <span id="tvaInfo"></span> | Dernière MAJ: <span id="majInfo"></span></small>
+      <small style="color:#666;">TVA: <span id="tvaInfo"></span> | Derniere MAJ: <span id="majInfo"></span></small>
     </div>
 
     <div class="card">
@@ -70,9 +68,9 @@
       <h3>3. Bouclier Anti-Triche OTR 🚨</h3>
       <small>Calcule ce que tu dois VRAIMENT payer selon la loi Togo</small>
       <input type="number" id="ca_mois" placeholder="CA mensuel HT FCFA" />
-      <input type="number" id="achats_mois" placeholder="Achats HT FCFA - pour TVA déductible" />
-      <input type="number" id="otr_demande" placeholder="Montant que l’OTR te demande FCFA" />
-      <button onclick="calculerOTR()">Vérifier le calcul OTR</button>
+      <input type="number" id="achats_mois" placeholder="Achats HT FCFA - pour TVA deductible" />
+      <input type="number" id="otr_demande" placeholder="Montant que l'OTR te demande FCFA" />
+      <button onclick="calculerOTR()">Verifier le calcul OTR</button>
       <div id="impots" class="result" style="display:none;"></div>
     </div>
   </div>
@@ -81,16 +79,16 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    // ===== CONFIG FISCALE TOGO - MODIFIE ICI CHAQUE ANNÉE =====
+    // ===== CONFIG FISCALE TOGO - MODIFIE ICI CHAQUE ANNEE =====
     const configFiscale = {
       annee: 2026,
       pays: "Togo",
       tva: {normal: 18, reduit: 10, exonere: 0},
       impots: {
-        is_normal: 27, // IS Régime Normal
-        is_simplifie: 15, // IS Régime Simplifié
-        tpp_seuil: 50000000, // Seuil TPP 50M FCFA
-        tpp_taux: 1.5 // TPP 1.5%
+        is_normal: 27,
+        is_simplifie: 15,
+        tpp_seuil: 50000000,
+        tpp_taux: 1.5
       },
       derniere_mise_a_jour: "2026-04-19"
     };
@@ -109,19 +107,19 @@
     const auth = getAuth(app);
     let journalVentes = JSON.parse(localStorage.getItem('journalVentes_'+new Date().toISOString().split('T')[0]) || '[]');
 
-    // Init interface avec config
+    // Init interface avec config - SANS ACCENTS pour eviter bugs
     document.getElementById('anneeBadge').textContent = configFiscale.annee;
     document.getElementById('tvaInfo').textContent = configFiscale.tva.normal + '% / ' + configFiscale.tva.reduit + '%';
     document.getElementById('majInfo').textContent = configFiscale.derniere_mise_a_jour;
     document.getElementById('tva').innerHTML = `
       <option value="${configFiscale.tva.normal}">TVA Normal ${configFiscale.tva.normal}%</option>
-      <option value="${configFiscale.tva.reduit}">TVA Réduit ${configFiscale.tva.reduit}% - Produits de base</option>
-      <option value="${configFiscale.tva.exonere}">Exonéré 0%</option>
+      <option value="${configFiscale.tva.reduit}">TVA Reduit ${configFiscale.tva.reduit}% - Produits de base</option>
+      <option value="${configFiscale.tva.exonere}">Exonere 0%</option>
     `;
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        document.getElementById('user-phone').textContent = 'Connecté: ' + user.phoneNumber;
+        document.getElementById('user-phone').textContent = 'Connecte: ' + user.phoneNumber;
         afficherJournal();
       } else {
         window.location.href = 'index.html';
@@ -149,7 +147,7 @@
 
       document.getElementById('resultat').style.display = 'block';
       document.getElementById('resultat').innerHTML = `
-        ✅ Vendu: <b>${produit}</b><br>
+        OK Vendu: <b>${produit}</b><br>
         TTC: ${prixTTC.toLocaleString()} FCFA | TVA ${tva}%: ${montantTVA.toLocaleString()} FCFA
       `;
 
@@ -175,11 +173,67 @@
       }
     }
 
-    window.assistantVoilà, tu colles ça d’un seul coup dans `dashboard.html` sur GitHub → `Valider` → test sur ton téléphone.
+    window.calculerOTR = function() {
+      const ca = parseFloat(document.getElementById('ca_mois').value) || 0;
+      const achats = parseFloat(document.getElementById('achats_mois').value) || 0;
+      const otrDemande = parseFloat(document.getElementById('otr_demande').value) || 0;
+      const regime = document.getElementById('regime').value;
 
-**En 2027 si TVA passe à 19% :**
-Tu ouvres juste ce fichier, tu changes `normal: 18` en `normal: 19` + `annee: 2027` en haut dans `configFiscale`, tu valides. Toutes les boutiques sont à jour.
+      if (!ca) return alert('Entre ton CA mensuel');
 
-Test "Bouclier Anti-Triche" : mets CA 500000, Achats 300000, OTR demande 80000 → tu verras direct si c’est trop.
+      const tvaCollectee = ca * configFiscale.tva.normal / 100;
+      const tvaDeductible = achats * configFiscale.tva.normal / 100;
+      const tvaReverser = Math.max(0, tvaCollectee - tvaDeductible);
 
-Ça marche chez toi?
+      const tauxIS = regime === 'normal'? configFiscale.impots.is_normal : configFiscale.impots.is_simplifie;
+      const beneficeAnnuel = (ca - achats) * 12;
+      const isMensuel = beneficeAnnuel * tauxIS / 100 / 12;
+
+      const tppMensuel = (ca * 12 > configFiscale.impots.tpp_seuil)? ca * configFiscale.impots.tpp_taux / 100 : 0;
+
+      const totalMensuel = tvaReverser + isMensuel + tppMensuel;
+      const difference = otrDemande - totalMensuel;
+
+      document.getElementById('impots').style.display = 'block';
+      document.getElementById('impots').className = difference > 0? 'result alert' : 'result';
+
+      document.getElementById('impots').innerHTML = `
+        <b>Calcul GMB24 - Annee ${configFiscale.annee}</b><br><br>
+        TVA a reverser: ${Math.round(tvaReverser).toLocaleString()} FCFA<br>
+        IS ${tauxIS}% /mois: ${Math.round(isMensuel).toLocaleString()} FCFA<br>
+        TPP /mois: ${Math.round(tppMensuel).toLocaleString()} FCFA<br>
+        <hr>
+        <b>TOTAL A PAYER: ${Math.round(totalMensuel).toLocaleString()} FCFA</b><br><br>
+        ${otrDemande > 0? `
+          OTR demande: ${otrDemande.toLocaleString()} FCFA<br>
+          <b style="color:${difference > 0? 'red' : 'green'}">
+          Difference: ${difference > 0? '+' : ''}${Math.round(difference).toLocaleString()} FCFA ${difference > 0? '🚨 TROP CHER' : 'OK'}
+          </b>` : ''}
+        <br><small>Base: config interne | Garde ce calcul comme preuve</small>
+      `;
+    }
+
+    window.exporterTXT = function() {
+      let contenu = 'GMB24 - JOURNAL VENTES\nDate: ' + new Date().toLocaleDateString('fr-FR') + '\n\n';
+      journalVentes.forEach(v => {
+        contenu += `${v.heure} | ${v.produit} | HT:${v.prixHT} | TVA:${v.montantTVA} | TTC:${v.prixTTC}\n`;
+      });
+      const blob = new Blob([contenu], {type: 'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Journal_Ventes_OTR.txt';
+      a.click();
+      alert('Fichier exporte! Envoie ca a lOTR comme preuve.');
+    }
+
+    window.viderJournal = function() {
+      if(confirm('Supprimer toutes les ventes du jour?')) {
+        journalVentes = [];
+        localStorage.removeItem('journalVentes_'+new Date().toISOString().split('T')[0]);
+        afficherJournal();
+      }
+    }
+  </script>
+</body>
+</html>
