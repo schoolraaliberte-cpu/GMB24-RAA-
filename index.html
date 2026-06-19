@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GMB24 Pro - Connexion SMS</title>
+<style>
+body{font-family:Arial;background:#1a365d;color:white;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
+.card{background:white;color:#1a365d;padding:25px;border-radius:12px;max-width:350px;width:90%;text-align:center;box-shadow:0 4px 15px rgba(0,0,0,0.3)}
+input,button{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #cbd5e0;box-sizing:border-box;font-size:16px}
+button{background:#2563eb;color:white;border:none;font-weight:bold;cursor:pointer;transition:0.2s}
+button:hover{background:#1d4ed8}
+button:disabled{background:#94a3b8;cursor:not-allowed}
+#recaptcha-container{margin:10px 0;display:flex;justify-content:center}
+#msg{font-size:13px;margin-top:10px;min-height:20px}
+h2{margin-top:0;color:#1a365d}
+</style>
+</head>
+<body>
+<div class="card">
+<h2>GMB24 Pro</h2>
+<div id="etape1">
+<p>Entrez votre numéro Togo</p>
+<input type="tel" id="phone" placeholder="+228 90 00 00 00" value="+228">
+<div id="recaptcha-container"></div>
+<button id="btn-sms" onclick="envoyerSMS()">Envoyer Code SMS</button>
+</div>
+
+<div id="etape2" style="display:none">
+<p>Code reçu par SMS</p>
+<input type="text" id="code" placeholder="6 chiffres" maxlength="6">
+<button id="btn-code" onclick="verifierCode()">Vérifier Code</button>
+</div>
+
+<p id="msg"></p>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyCBYnjsBMJGeR57Kk3FX9zeIplE5EFkcIY",
+authDomain: "gmb24-raa.firebaseapp.com",
+projectId: "gmb24-raa",
+storageBucket: "gmb24-raa.firebasestorage.app",
+messagingSenderId: "558507911211",
+appId: "1:558507911211:web:5cdc99c082fe653684626e"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+size: 'normal',
+callback: function() {}
+});
+
+window.envoyerSMS = async function() {
+const phone = document.getElementById('phone').value.trim();
+const btn = document.getElementById('btn-sms');
+const msg = document.getElementById('msg');
+msg.style.color = 'red';
+
+if (!phone.startsWith('+228') || phone.length < 12) {
+msg.innerText = 'Numéro invalide. Ex: +228 90 00 00 00';
+return;
+}
+
+btn.disabled = true;
+btn.innerText = 'Envoi en cours...';
+msg.innerText = '';
+
+try {
+window.confirmationResult = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier);
+document.getElementById('etape1').style.display = 'none';
+document.getElementById('etape2').style.display = 'block';
+msg.style.color = 'green';
+msg.innerText = 'SMS envoyé ! Vérifie ton téléphone.';
+} catch (error) {
+msg.innerText = 'Erreur: ' + error.message;
+btn.disabled = false;
+btn.innerText = 'Envoyer Code SMS';
+window.recaptchaVerifier.render();
+}
+}
+
+window.verifierCode = async function() {
+const code = document.getElementById('code').value.trim();
+const btn = document.getElementById('btn-code');
+const msg = document.getElementById('msg');
+
+if (code.length !== 6) {
+msg.innerText = 'Code doit faire 6 chiffres';
+return;
+}
+
+btn.disabled = true;
+btn.innerText = 'Vérification...';
+
+try {
+await window.confirmationResult.confirm(code);
+msg.style.color = 'green';
+msg.innerText = 'Connecté ! Redirection...';
+setTimeout(function() {
+window.location.href = './dashboard.html';
+}, 1000);
+} catch (error) {
+msg.style.color = 'red';
+msg.innerText = 'Code incorrect. Réessaie.';
+btn.disabled = false;
+btn.innerText = 'Vérifier Code';
+}
+</script>
+</body>
+</html>
