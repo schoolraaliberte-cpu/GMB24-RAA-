@@ -29,7 +29,6 @@ button.orange{background:#f59e0b}
 .menu div{cursor:pointer;padding:14px 8px;color:#64748b;font-size:14px;font-weight:500;flex:1;text-align:center}
 .menu div.active{color:#2563eb;border-bottom:3px solid #2563eb}
 .content{padding-bottom:60px}
-.alert{padding:12px;background:#fef3c7;border-left:4px solid #f59e0b;border-radius:8px;font-size:13px;margin-top:12px;color:#78350f}
 .badge{background:#dbeafe;color:#1e40af;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:bold;display:inline-block;margin-top:8px}
 table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
 th{background:#1e3a8a;color:white;padding:8px;text-align:left}
@@ -91,7 +90,7 @@ tr.total{background:#f1f5f9;font-weight:bold}
 <div onclick="showSection('fiscal', this)">⚙️ Paramètres</div>
 </div>
 
-<!-- DASHBOARD VENTES JOURNALIERES -->
+<!-- DASHBOARD -->
 <div id="dashboard" class="section">
 <div class="filtre">
 <label>📅 Filtrer par mois :</label>
@@ -152,7 +151,6 @@ tr.total{background:#f1f5f9;font-weight:bold}
 <div class="card">
 <h3>💰 Dépenses du Mois</h3>
 <label>Total Dépenses :</label><input type="number" id="inputDepenses" onblur="saveFiscal()">
-<small>Loyer, électricité, achats marchandises...</small>
 </div>
 
 <div class="card">
@@ -164,8 +162,9 @@ tr.total{background:#f1f5f9;font-weight:bold}
 
 <div class="card">
 <h3>🛠️ Dépannage Admin</h3>
-<label>Code de déblocage :</label><input type="text" id="codeDeblocage">
-<button class="green" onclick="debloquer()">Débloquer 30 jours</button>
+<p style="font-size:12px;color:#64748b">Code Master pour SAGUEDA: SAGUEDA-ADMIN-2026</p>
+<label>Code de déblocage :</label><input type="text" id="codeDeblocage" placeholder="Colle le code ici">
+<button class="green" onclick="debloquer()">Débloquer</button>
 </div>
 </div>
 
@@ -229,18 +228,23 @@ function payerLicence() {
   }
 }
 
+// ===== CODE MASTER POUR TOI =====
 function debloquer() {
   let code = document.getElementById('codeDeblocage').value.trim();
   let numero = localStorage.getItem('userPhone');
+  
+  // CODE MASTER POUR SAGUEDA - DEBLOCAGE A VIE
+  let codeMaster = "SAGUEDA-ADMIN-2026";
   let codeValide = new Date().toISOString().slice(0,10).replace(/-/g,'') + numero;
-  if(code === codeValide) {
+  
+  if(code === codeMaster || code === codeValide) {
     localStorage.setItem('licenceActive', 'true');
-    let expire = new Date();
-    expire.setDate(expire.getDate() + 30);
-    localStorage.setItem('dateExpire', expire.toISOString());
-    alert('✅ Débloqué 30 jours');
+    localStorage.setItem('dateExpire', '2099-12-31T23:59:59');
+    alert('✅ Licence Admin activée à vie !');
     location.reload();
-  } else alert('Code incorrect');
+  } else {
+    alert('Code incorrect. Contacte SAGUEDA +22896766875');
+  }
 }
 
 function showSection(id, el) {
@@ -274,10 +278,7 @@ window.addEventListener('load', () => {
   document.getElementById('tauxTvaOtr').value = localStorage.getItem('tauxTvaOtr') || '1';
   document.getElementById('inputDepenses').value = localStorage.getItem('depensesMois') || '';
   
-  // Met date d'aujourd'hui par défaut
   document.getElementById('dateVente').valueAsDate = new Date();
-  
-  // Met mois actuel dans filtre
   let moisActuel = new Date().toISOString().slice(0,7);
   document.getElementById('filtreMois').value = moisActuel;
   
@@ -314,7 +315,6 @@ function calculerLigne() {
   document.getElementById('montantHT').value = Math.round(prixHT);
 }
 
-// ===== ENREGISTRER VENTE JOURNALIERE =====
 function ajouterLigne() {
   const dateVente = document.getElementById('dateVente').value;
   const client = document.getElementById('nomClient').value.trim();
@@ -341,7 +341,6 @@ function ajouterLigne() {
   updateDashboard();
 }
 
-// ===== FILTRER PAR MOIS =====
 function getInventaireMois() {
   let moisFiltre = document.getElementById('filtreMois').value;
   return inventaire.filter(l => l.date.startsWith(moisFiltre));
@@ -376,7 +375,6 @@ function supprimerLigne(index) {
   }
 }
 
-// ===== CALCULS + CLOTURE AUTO =====
 function updateDashboard() {
   let inventaireMois = getInventaireMois();
   const totalTTC = inventaireMois.reduce((sum, l) => sum + (l.prixTTC * l.qte), 0);
@@ -402,7 +400,6 @@ function calculerProfitNet(ventesTTC, depenses) {
   return {ventesHT: Math.round(ventesHT), tvaCollectee: Math.round(tva), beneficeBrut: Math.round(benefice), impot: Math.round(impot), tvaOtr: Math.round(tvaOtr), profitNet: Math.round(profitNet)};
 }
 
-// ===== CLOTURER LE MOIS AUTO =====
 function cloturerMois() {
   let inventaireMois = getInventaireMois();
   if(inventaireMois.length === 0) {
@@ -429,23 +426,17 @@ function cloturerMois() {
   <div class="result-box">
   <h3 style="text-align:center">${nomBoutique.toUpperCase()}</h3>
   <p style="text-align:center">FICHE INVENTAIRE MENSUELLE - ${mois}</p>
-  <p><b>Gérant:</b> ${nom} | <b>IFU:</b> ${document.getElementById('ifu').value} | <b>CFE:</b> ${document.getElementById('numCFE').value}</p>
-  <p><b>Taux:</b> IS/IRPP ${document.getElementById('tauxImpot').value}% | TVA ${document.getElementById('tauxTVA').value}% | TVA OTR ${document.getElementById('tauxTvaOtr').value}%</p>
-  
+  <p><b>Gérant:</b> ${nom} | <b>IFU:</b> ${document.getElementById('ifu').value}</p>
   <table><thead><tr><th>Date</th><th>Client</th><th>Article</th><th>Qté</th><th>TTC</th><th>HT</th></tr></thead>
   <tbody>${lignesHTML}</tbody>
   <tr class="total"><td colspan="4">TOTAL ${mois}</td><td>${ventesTTC.toLocaleString()}</td><td>${calc.ventesHT.toLocaleString()}</td></tr></table>
-  
-  <br><b>Dépenses du mois:</b> ${depenses.toLocaleString()} FCFA<br>
-  <b>Bénéfice Brut:</b> ${calc.beneficeBrut.toLocaleString()} FCFA<br>
-  <b>IS/IRPP ${document.getElementById('tauxImpot').value}%:</b> ${calc.impot.toLocaleString()} FCFA<br>
-  <b>TVA Collectée:</b> ${calc.tvaCollectee.toLocaleString()} FCFA<br>
-  <b>TVA OTR 1%:</b> ${calc.tvaOtr.toLocaleString()} FCFA<br>
-  <b style="color:#059669;font-size:18px">MONTANT À PAYER OTR: ${(calc.impot + calc.tvaCollectee + calc.tvaOtr).toLocaleString()} FCFA</b><br>
-  <b>Profit Net:</b> ${calc.profitNet.toLocaleString()} FCFA
-  
-  <button class="green" onclick="exporterPDF()">📥 Exporter PDF pour OTR</button>
-  <button class="btn-danger" onclick="archiverMois()">🗄️ Archiver & Nouveau Mois</button>
+  <br><b>Dépenses:</b> ${depenses.toLocaleString()} FCFA<br>
+  <b>IS/IRPP:</b> ${calc.impot.toLocaleString()} FCFA<br>
+  <b>TVA:</b> ${calc.tvaCollectee.toLocaleString()} FCFA<br>
+  <b>TVA OTR:</b> ${calc.tvaOtr.toLocaleString()} FCFA<br>
+  <b style="color:#059669;font-size:18px">À PAYER OTR: ${(calc.impot + calc.tvaCollectee + calc.tvaOtr).toLocaleString()} FCFA</b>
+  <button class="green" onclick="exporterPDF()">📥 Exporter PDF</button>
+  <button class="btn-danger" onclick="archiverMois()">🗄️ Archiver Mois</button>
   </div>`;
 }
 
@@ -459,18 +450,10 @@ function exporterPDF() {
   doc.setFontSize(16);
   doc.text(nomBoutique.toUpperCase(), 105, 15, {align: 'center'});
   doc.setFontSize(11);
-  doc.text(`Fiche Inventaire Mensuelle - ${mois}`, 105, 23, {align: 'center'});
+  doc.text(`Fiche Inventaire - ${mois}`, 105, 23, {align: 'center'});
   
   let y = 40;
   doc.setFontSize(8);
-  doc.text('Date', 14, y);
-  doc.text('Client', 32, y);
-  doc.text('Article', 60, y);
-  doc.text('Qté', 100, y);
-  doc.text('TTC', 120, y);
-  doc.text('HT', 150, y);
-  y += 6;
-  
   let inventaireMois = getInventaireMois();
   inventaireMois.forEach(l => {
     const ttc = l.prixTTC * l.qte;
@@ -482,14 +465,13 @@ function exporterPDF() {
     doc.text(ttc.toLocaleString(), 120, y);
     doc.text(ht.toLocaleString(), 150, y);
     y += 6;
-    if(y > 270) {doc.addPage(); y = 20;}
   });
   
   doc.save(`CFE_${nomBoutique}_${moisFiltre}.pdf`);
 }
 
 function archiverMois() {
-  if(confirm('Archiver ce mois et vider pour nouveau mois?')) {
+  if(confirm('Archiver ce mois et vider?')) {
     let moisFiltre = document.getElementById('filtreMois').value;
     inventaire = inventaire.filter(l => !l.date.startsWith(moisFiltre));
     localStorage.setItem('inventaire', JSON.stringify(inventaire));
@@ -497,7 +479,7 @@ function archiverMois() {
     saveFiscal();
     afficherInventaire();
     updateDashboard();
-    document.getElementById('resultatInventaire').innerHTML = '<p style="color:green">✅ Mois archivé. Vous pouvez saisir les ventes du nouveau mois.</p>';
+    document.getElementById('resultatInventaire').innerHTML = '<p style="color:green">✅ Mois archivé</p>';
   }
 }
 
