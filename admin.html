@@ -3,159 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GMB24 Admin - Codes Déblocage</title>
+<title>GMB24 Admin - Générer Licence</title>
 <style>
-* {box-sizing: border-box}
-body{font-family:'Segoe UI',Arial;background:#1e3a8a;color:white;margin:0;padding:20px;min-height:100vh}
-.container{max-width:500px;margin:0 auto}
-.box{background:white;color:#334155;padding:25px;border-radius:16px;margin-bottom:15px;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
-h2{color:#1e3a8a;margin-top:0;text-align:center}
-h3{color:#059669;margin:0 0 10px 0}
-label{display:block;margin-top:12px;font-weight:600;font-size:14px;color:#334155}
-input,select{width:100%;padding:12px;border:2px solid #cbd5e1;border-radius:8px;font-size:16px;margin-top:4px}
-button{background:#059669;color:white;border:none;padding:15px;border-radius:8px;width:100%;font-weight:bold;font-size:16px;cursor:pointer;margin-top:12px}
-button:hover{background:#047857}
-button.whatsapp{background:#25D366}
-button.whatsapp:hover{background:#1ebc57}
-button.copier{background:#2563eb}
-.result{background:#f0fdf4;border:2px solid #059669;border-radius:8px;padding:15px;margin-top:15px}
-.code{font-size:18px;font-weight:bold;color:#dc2626;word-break:break-all;background:#fff;padding:10px;border-radius:6px;margin:10px 0}
-.historique{max-height:300px;overflow-y:auto}
-.item{background:#f8fafc;border-left:4px solid #2563eb;padding:10px;margin:8px 0;border-radius:6px;font-size:13px}
-.item small{color:#64748b}
-.alert{padding:10px;background:#fef3c7;border-left:4px solid #f59e0b;border-radius:6px;font-size:12px;margin:10px 0;color:#78350f}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#1e3a8a;color:white;margin:0;padding:20px;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.card{background:white;color:#334155;border-radius:16px;padding:30px;max-width:400px;width:100%}
+h1{color:#1e3a8a;margin-top:0;text-align:center}
+label{display:block;margin-top:15px;font-weight:600}
+input{width:100%;padding:12px;border:2px solid #cbd5e1;border-radius:8px;margin-top:4px;font-size:15px}
+button{background:#7c3aed;color:white;border:none;padding:14px;border-radius:8px;width:100%;font-weight:bold;margin-top:20px;cursor:pointer;font-size:16px}
+.code-box{background:#dcfce7;color:#166534;padding:15px;border-radius:8px;margin-top:15px;text-align:center;font-size:24px;font-weight:bold;letter-spacing:3px;display:none}
+.info{background:#dbeafe;color:#1e40af;padding:12px;border-radius:8px;margin-top:15px;font-size:13px}
 </style>
 </head>
 <body>
-<div class="container">
-
-<div class="box">
-<h2>🔑 GMB24 Admin Panel</h2>
-<p style="text-align:center;font-size:13px;color:#64748b">Génère code déblocage après paiement 5000F</p>
-
-<div class="alert">
-<b>Rappel:</b> Code = Date + Numéro client. Valable 24h seulement.
-</div>
-
+<div class="card">
+<h1>🔑 Admin GMB24</h1>
 <label>Numéro client WhatsApp :</label>
-<input type="tel" id="numClient" placeholder="+22890123456">
-
-<label>Date du paiement :</label>
-<input type="date" id="datePaiement">
-
-<button onclick="genererCode()">1️⃣ Générer Code 30 jours</button>
-
-<div id="resultat" style="display:none" class="result">
-<p><b>Code à envoyer :</b></p>
-<div class="code" id="codeGenere"></div>
-<button class="copier" onclick="copierCode()">📋 Copier Code</button>
-<button class="whatsapp" onclick="envoyerWhatsApp()">📱 Envoyer sur WhatsApp</button>
-<small>Le client colle ce code dans "Dépannage Admin" de son app</small>
-</div>
+<input type="tel" id="phone" placeholder="+228 90 12 34 56">
+<button onclick="genererCode()">Générer Code 30j - 5000F</button>
+<div id="codeBox" class="code-box"></div>
+<div class="info">Ce code active 30 jours pour le numéro. 1 code = 1 client.</div>
 </div>
 
-<div class="box">
-<h3>📜 Historique Codes Générés</h3>
-<div id="historique" class="historique"></div>
-<button onclick="viderHistorique()" style="background:#dc2626">🗑️ Vider Historique</button>
-</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-</div>
+const firebaseConfig = {
+apiKey: "AIzaSyCBYnjsBMJGeR57Kk3FX9zeIplE5EFkcIY",
+authDomain: "gmb24-raa.firebaseapp.com",
+projectId: "gmb24-raa",
+storageBucket: "gmb24-raa.firebasestorage.app",
+messagingSenderId: "558507911211",
+appId: "1:558507911211:web:5cdc99c082fe653684626e"
+};
 
-<script>
-window.onload = () => {
-  document.getElementById('datePaiement').valueAsDate = new Date();
-  afficherHistorique();
-}
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-function genererCode() {
-  let numero = document.getElementById('numClient').value.trim();
-  let date = document.getElementById('datePaiement').value;
-  
-  numero = numero.replace(/\s/g, '').replace(/-/g, '');
-  if(!numero.startsWith('+228')) numero = '+228' + numero.replace(/^0/, '');
-  
-  if(numero.length < 12) {
-    alert('Numéro invalide. Ex: +22890123456');
-    return;
-  }
-  
-  if(!date) {
-    alert('Choisis la date du paiement');
-    return;
-  }
-  
-  // Format: 20261020+22890123456
-  let dateCode = date.replace(/-/g, '');
-  let code = dateCode + numero;
-  
-  document.getElementById('codeGenere').innerText = code;
-  document.getElementById('resultat').style.display = 'block';
-  
-  // Sauvegarder dans historique
-  let historique = JSON.parse(localStorage.getItem('adminHistorique') || '[]');
-  historique.unshift({
-    numero: numero,
-    date: date,
-    code: code,
-    heure: new Date().toLocaleString('fr-FR')
-  });
-  if(historique.length > 50) historique = historique.slice(0,50);
-  localStorage.setItem('adminHistorique', JSON.stringify(historique));
-  afficherHistorique();
-}
+window.genererCode = async function() {
+const phone = document.getElementById('phone').value.trim();
+if(!phone) return alert('Entre le numéro');
 
-function copierCode() {
-  let code = document.getElementById('codeGenere').innerText;
-  navigator.clipboard.writeText(code);
-  alert('✅ Code copié !');
-}
+const code = Math.random().toString(36).substring(2,8).toUpperCase();
+await setDoc(doc(db, "codesLicence", code), {
+phone, utilise: false, created: new Date().toISOString()
+});
 
-function envoyerWhatsApp() {
-  let numero = document.getElementById('numClient').value.trim();
-  let code = document.getElementById('codeGenere').innerText;
-  let date = document.getElementById('datePaiement').value;
-  
-  numero = numero.replace(/\s/g, '').replace(/-/g, '').replace(/^\+/, '');
-  let dateFr = new Date(date).toLocaleDateString('fr-FR');
-  
-  let message = `Bonjour,\n\nVotre paiement de 5000F pour GMB24 Pro Fiscal a été confirmé.\n\nVoici votre code de déblocage valable 30 jours :\n\n🔑 ${code}\n\nInstructions :\n1. Ouvre l'application GMB24\n2. Va dans Paramètres > Dépannage Admin\n3. Colle ce code et clique "Débloquer"\n\nMerci et bonne utilisation !\nSAGUEDA wen-bakpéta`;
-  
-  let url = `https://wa.me/${numero}?text=${encodeURIComponent(message)}`;
-  window.open(url, '_blank');
-}
-
-function afficherHistorique() {
-  let historique = JSON.parse(localStorage.getItem('adminHistorique') || '[]');
-  let div = document.getElementById('historique');
-  
-  if(historique.length === 0) {
-    div.innerHTML = '<p style="color:#94a3b8;text-align:center">Aucun code généré</p>';
-    return;
-  }
-  
-  div.innerHTML = historique.map(item => `
-    <div class="item">
-      <b>${item.numero}</b><br>
-      Code: <span style="color:#dc2626;font-weight:bold">${item.code}</span><br>
-      <small>Date paiement: ${item.date} | Généré: ${item.heure}</small><br>
-      <button onclick="reenvoyer('${item.numero}','${item.code}','${item.date}')" style="padding:5px 10px;font-size:12px;width:auto;background:#25D366;margin-top:5px">📱 Renvoyer WhatsApp</button>
-    </div>
-  `).join('');
-}
-
-function reenvoyer(numero, code, date) {
-  numero = numero.replace(/\s/g, '').replace(/-/g, '').replace(/^\+/, '');
-  let dateFr = new Date(date).toLocaleDateString('fr-FR');
-  let message = `Rappel - Votre code GMB24 Pro Fiscal :\n\n🔑 ${code}\n\nValable 30 jours. Colle dans Paramètres > Dépannage Admin`;
-  window.open(`https://wa.me/${numero}?text=${encodeURIComponent(message)}`, '_blank');
-}
-
-function viderHistorique() {
-  if(confirm('Supprimer tout l\'historique?')) {
-    localStorage.removeItem('adminHistorique');
-    afficherHistorique();
-  }
+const box = document.getElementById('codeBox');
+box.innerText = code;
+box.style.display = 'block';
 }
 </script>
 </body>
