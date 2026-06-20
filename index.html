@@ -3,48 +3,98 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GMB24 Pro - Connexion Email</title>
-<meta name="theme-color" content="#2563eb">
-<link rel="manifest" href="./manifest.json">
+<title>GMB24 Pro Fiscal - Connexion</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e3a8a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GMB24">
 <style>
-body{font-family:Arial;background:#1a365d;color:white;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
-.card{background:white;color:#1a365d;padding:25px;border-radius:12px;max-width:350px;width:90%;text-align:center;box-shadow:0 4px 15px rgba(0,0,0,0.3)}
-input,button{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #cbd5e0;box-sizing:border-box;font-size:16px}
-button{background:#2563eb;color:white;border:none;font-weight:bold;cursor:pointer;transition:0.2s}
+* {box-sizing: border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%);margin:0;padding:20px;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:white;border-radius:16px;padding:25px;max-width:400px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,0.3)}
+h1{color:#1e3a8a;text-align:center;margin:0 0 8px 0;font-size:24px}
+.subtitle{text-align:center;color:#64748b;font-size:14px;margin-bottom:25px}
+.tabs{display:flex;gap:8px;margin-bottom:20px;background:#f1f5f9;padding:4px;border-radius:10px}
+.tab{flex:1;padding:10px;text-align:center;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;color:#64748b}
+.tab.active{background:white;color:#1e3a8a;box-shadow:0 2px 4px rgba(0,0,0,0.1)}
+.section{display:none}
+.section.active{display:block}
+label{display:block;margin-top:12px;font-weight:600;font-size:14px;color:#334155}
+input{width:100%;padding:12px;border:2px solid #cbd5e1;border-radius:8px;margin-top:4px;font-size:15px}
+input:focus{outline:none;border-color:#2563eb}
+button{background:#2563eb;color:white;border:none;padding:14px;border-radius:8px;width:100%;font-weight:bold;margin-top:15px;cursor:pointer;font-size:16px}
 button:hover{background:#1d4ed8}
-button:disabled{background:#94a3b8;cursor:not-allowed}
-#msg{font-size:13px;margin-top:10px;min-height:20px}
-h2{margin-top:0;color:#1a365d}
-.switch{font-size:13px;margin-top:15px}
-.switch a{color:#2563eb;text-decoration:none;font-weight:bold;cursor:pointer}
+button.green{background:#059669}
+button.orange{background:#f59e0b}
+.error{background:#fee2e2;color:#991b1b;padding:10px;border-radius:8px;margin-top:10px;font-size:13px;display:none}
+.success{background:#dcfce7;color:#166534;padding:10px;border-radius:8px;margin-top:10px;font-size:13px;display:none}
+.info{background:#dbeafe;color:#1e40af;padding:12px;border-radius:8px;margin-top:15px;font-size:13px}
+.hidden{display:none}
+#recaptcha-container{margin-top:10px}
+.install-btn{background:#7c3aed;margin-top:10px;font-size:14px;padding:10px;display:none}
 </style>
 </head>
 <body>
+
 <div class="card">
-<h2>GMB24 Pro</h2>
+<h1>GMB24 Pro Fiscal</h1>
+<p class="subtitle">Gestion boutique OTR - Togo</p>
 
-<div id="inscription">
-<p>Créer un compte</p>
-<input type="email" id="email" placeholder="ton@email.com">
-<input type="password" id="password" placeholder="Mot de passe 6-16 caractères" maxlength="16">
-<button id="btn-signup" onclick="creerCompte()">S'inscrire</button>
-<p class="switch">Déjà un compte ? <a onclick="afficherConnexion()">Se connecter</a></p>
+<button id="installBtn" class="install-btn" onclick="installerPWA()">📲 Installer l'application</button>
+
+<div class="tabs">
+<div class="tab active" onclick="showTab('proprietaire')">👤 Propriétaire</div>
+<div class="tab" onclick="showTab('client')">📱 Client</div>
 </div>
 
-<div id="connexion" style="display:none">
-<p>Connexion</p>
-<input type="email" id="login-email" placeholder="ton@email.com">
-<input type="password" id="login-password" placeholder="Mot de passe">
-<button id="btn-login" onclick="seConnecter()">Se connecter</button>
-<p class="switch">Pas de compte ? <a onclick="afficherInscription()">S'inscrire</a></p>
+<!-- ONGLET PROPRIETAIRE -->
+<div id="proprietaire" class="section active">
+<label>Email :</label>
+<input type="email" id="emailOwner" placeholder="tonemail@gmail.com">
+<label>Mot de passe :</label>
+<input type="password" id="passwordOwner" placeholder="••••">
+<button onclick="loginOwner()">Se connecter</button>
+<div id="errorOwner" class="error"></div>
+<div class="info">Accès illimité. Pas de licence ni de code.</div>
 </div>
 
-<p id="msg"></p>
+<!-- ONGLET CLIENT -->
+<div id="client" class="section">
+<div id="etapePhone">
+<label>Numéro WhatsApp :</label>
+<input type="tel" id="phoneClient" placeholder="+228 90 12 34 56">
+<div id="recaptcha-container"></div>
+<button onclick="sendOTP()">Recevoir le code SMS</button>
+<div id="errorClient" class="error"></div>
+<div class="info">30 jours gratuits pour tester. Après → licence 5000F/30j</div>
+</div>
+
+<div id="etapeOTP" class="hidden">
+<label>Code SMS reçu :</label>
+<input type="text" id="codeOTP" placeholder="123456" maxlength="6">
+<button class="green" onclick="verifyOTP()">Vérifier</button>
+<button onclick="backToPhone()">← Changer numéro</button>
+<div id="errorOTP" class="error"></div>
+</div>
+
+<div id="etapeLicence" class="hidden">
+<label>Code Licence 6 chiffres :</label>
+<input type="text" id="codeLicence" placeholder="AB12CD" maxlength="6">
+<button class="orange" onclick="activerLicence()">Activer 30 jours</button>
+<button onclick="backToPhone()">← Changer numéro</button>
+<div id="errorLicence" class="error"></div>
+<div id="successLicence" class="success"></div>
+<div class="info">Tu n’as pas de code ? Contacte le propriétaire pour 5000F</div>
+</div>
+
+</div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
 apiKey: "AIzaSyCBYnjsBMJGeR57Kk3FX9zeIplE5EFkcIY",
@@ -59,88 +109,173 @@ measurementId: "G-KVHFHTJVFN"
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
+let confirmationResult;
+let userPhone = "";
+let deferredPrompt;
 
-// Switch entre inscription/connexion
-window.afficherConnexion = function() {
-document.getElementById('inscription').style.display = 'none';
-document.getElementById('connexion').style.display = 'block';
-document.getElementById('msg').innerText = '';
+// PWA INSTALL
+window.addEventListener('beforeinstallprompt', (e) => {
+e.preventDefault();
+deferredPrompt = e;
+document.getElementById('installBtn').style.display = 'block';
+});
+
+window.installerPWA = async function() {
+if(deferredPrompt) {
+deferredPrompt.prompt();
+await deferredPrompt.userChoice;
+deferredPrompt = null;
+document.getElementById('installBtn').style.display = 'none';
+}
+};
+
+// SERVICE WORKER
+if('serviceWorker' in navigator) {
+navigator.serviceWorker.register('sw.js');
 }
 
-window.afficherInscription = function() {
-document.getElementById('connexion').style.display = 'none';
-document.getElementById('inscription').style.display = 'block';
-document.getElementById('msg').innerText = '';
+// TABS
+window.showTab = function(tab) {
+document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+event.target.classList.add('active');
+document.getElementById(tab).classList.add('active');
 }
 
-// Créer compte avec Email/MDP
-window.creerCompte = async function() {
-const email = document.getElementById('email').value.trim();
-const password = document.getElementById('password').value;
-const btn = document.getElementById('btn-signup');
-const msg = document.getElementById('msg');
-msg.style.color = 'red';
-
-if (!email.includes('@')) {
-msg.innerText = 'Email invalide';
-return;
-}
-if (password.length < 6) {
-msg.innerText = 'Mot de passe trop court. Minimum 6 caractères';
-return;
-}
-
-btn.disabled = true;
-btn.innerText = 'Création...';
-msg.innerText = '';
-
-try {
-await createUserWithEmailAndPassword(auth, email, password);
-msg.style.color = 'green';
-msg.innerText = 'Compte créé ! Redirection...';
-setTimeout(function() {
-window.location.href = './dashboard.html';
-}, 1000);
-} catch (error) {
-btn.disabled = false;
-btn.innerText = 'S\'inscrire';
-if (error.code === 'auth/email-already-in-use') {
-msg.innerText = 'Cet email est déjà utilisé. Connecte-toi.';
-} else {
-msg.innerText = 'Erreur: ' + error.message;
-}
-}
-
-// Se connecter
-window.seConnecter = async function() {
-const email = document.getElementById('login-email').value.trim();
-const password = document.getElementById('login-password').value;
-const btn = document.getElementById('btn-login');
-const msg = document.getElementById('msg');
-msg.style.color = 'red';
-
-btn.disabled = true;
-btn.innerText = 'Connexion...';
-msg.innerText = '';
+// PROPRIETAIRE LOGIN
+window.loginOwner = async function() {
+const email = document.getElementById('emailOwner').value.trim();
+const password = document.getElementById('passwordOwner').value;
+const errorDiv = document.getElementById('errorOwner');
+errorDiv.style.display = 'none';
 
 try {
 await signInWithEmailAndPassword(auth, email, password);
-msg.style.color = 'green';
-msg.innerText = 'Connecté ! Redirection...';
-setTimeout(function() {
 window.location.href = './dashboard.html';
-}, 1000);
-} catch (error) {
-btn.disabled = false;
-btn.innerText = 'Se connecter';
-msg.innerText = 'Email ou mot de passe incorrect';
+} catch(err) {
+errorDiv.innerText = 'Email ou mot de passe incorrect';
+errorDiv.style.display = 'block';
 }
-</script>
+}
 
-<script>
-// Enregistrement Service Worker pour PWA
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('./service-worker.js');
+// CLIENT : RECAPTCHA
+window.onload = function() {
+window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+size: 'normal',
+callback: () => {}
+});
+}
+
+// CLIENT : ENVOYER SMS
+window.sendOTP = async function() {
+let phone = document.getElementById('phoneClient').value.trim();
+const errorDiv = document.getElementById('errorClient');
+errorDiv.style.display = 'none';
+
+if(!phone.startsWith('+228')) phone = '+228' + phone.replace(/\D/g,'');
+userPhone = phone;
+
+try {
+confirmationResult = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier);
+document.getElementById('etapePhone').classList.add('hidden');
+document.getElementById('etapeOTP').classList.remove('hidden');
+} catch(err) {
+errorDiv.innerText = 'Erreur SMS. Vérifie le numéro + format international';
+errorDiv.style.display = 'block';
+}
+}
+
+window.backToPhone = function() {
+document.getElementById('etapeOTP').classList.add('hidden');
+document.getElementById('etapeLicence').classList.add('hidden');
+document.getElementById('etapePhone').classList.remove('hidden');
+}
+
+// CLIENT : VERIFIER OTP + CHECK LICENCE
+window.verifyOTP = async function() {
+const code = document.getElementById('codeOTP').value.trim();
+const errorDiv = document.getElementById('errorOTP');
+errorDiv.style.display = 'none';
+
+try {
+await confirmationResult.confirm(code);
+const docRef = doc(db, "licences", userPhone);
+const docSnap = await getDoc(docRef);
+
+if(docSnap.exists()) {
+const data = docSnap.data();
+const dateExpire = new Date(data.dateExpire);
+const now = new Date();
+
+if(dateExpire > now) {
+localStorage.setItem('userPhone', userPhone);
+window.location.href = './dashboard.html';
+} else {
+document.getElementById('etapeOTP').classList.add('hidden');
+document.getElementById('etapeLicence').classList.remove('hidden');
+}
+} else {
+const dateExpire = new Date();
+dateExpire.setDate(dateExpire.getDate() + 30);
+await setDoc(docRef, {
+phone: userPhone,
+dateCreation: new Date().toISOString(),
+dateExpire: dateExpire.toISOString(),
+actif: true
+});
+localStorage.setItem('userPhone', userPhone);
+window.location.href = './dashboard.html';
+}
+
+} catch(err) {
+errorDiv.innerText = 'Code SMS incorrect';
+errorDiv.style.display = 'block';
+}
+}
+
+// CLIENT : ACTIVER LICENCE AVEC CODE
+window.activerLicence = async function() {
+const code = document.getElementById('codeLicence').value.trim().toUpperCase();
+const errorDiv = document.getElementById('errorLicence');
+const successDiv = document.getElementById('successLicence');
+errorDiv.style.display = 'none';
+successDiv.style.display = 'none';
+
+const docRef = doc(db, "codesLicence", code);
+const docSnap = await getDoc(docRef);
+
+if(!docSnap.exists()) {
+errorDiv.innerText = 'Code invalide';
+errorDiv.style.display = 'block';
+return;
+}
+
+const data = docSnap.data();
+if(data.utilise) {
+errorDiv.innerText = 'Code déjà utilisé';
+errorDiv.style.display = 'block';
+return;
+}
+
+const dateExpire = new Date();
+dateExpire.setDate(dateExpire.getDate() + 30);
+await setDoc(doc(db, "licences", userPhone), {
+phone: userPhone,
+dateExpire: dateExpire.toISOString(),
+actif: true,
+codeUtilise: code
+});
+
+await setDoc(docRef, {utilise: true}, {merge: true});
+
+successDiv.innerText = 'Licence activée ! Redirection...';
+successDiv.style.display = 'block';
+
+setTimeout(() => {
+localStorage.setItem('userPhone', userPhone);
+window.location.href = './dashboard.html';
+}, 1500);
 }
 </script>
 </body>
