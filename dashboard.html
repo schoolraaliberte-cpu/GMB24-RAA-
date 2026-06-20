@@ -21,34 +21,65 @@ h3{color:#1e293b;margin:0 0 12px 0;font-size:16px}
 .kpi-value.green{color:#059669}
 label{display:block;margin-top:12px;font-weight:600;font-size:14px;color:#334155}
 input,select{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;margin-top:4px;font-size:15px}
-input:focus,select:focus{outline:none;border-color:#2563eb}
 button{background:#2563eb;color:white;border:none;padding:12px;border-radius:8px;width:100%;font-weight:bold;margin-top:12px;cursor:pointer;font-size:15px}
 button:hover{background:#1d4ed8}
 button.green{background:#059669}
-button.green:hover{background:#047857}
+button.orange{background:#f59e0b}
 .menu{display:flex;justify-content:space-around;background:white;padding:0;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:10}
 .menu div{cursor:pointer;padding:14px 8px;color:#64748b;font-size:14px;font-weight:500;flex:1;text-align:center}
 .menu div.active{color:#2563eb;border-bottom:3px solid #2563eb}
 .content{padding-bottom:60px}
 .alert{padding:12px;background:#fef3c7;border-left:4px solid #f59e0b;border-radius:8px;font-size:13px;margin-top:12px;color:#78350f}
 .badge{background:#dbeafe;color:#1e40af;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:bold;display:inline-block;margin-top:8px}
-small{color:#64748b;font-size:12px}
-.result-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;margin-top:12px;font-size:14px;line-height:1.8}
-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
 th{background:#1e3a8a;color:white;padding:8px;text-align:left}
 td{padding:8px;border-bottom:1px solid #e2e8f0}
 tr.total{background:#f1f5f9;font-weight:bold}
 .btn-small{padding:6px 10px;font-size:12px;width:auto;display:inline-block;margin:2px}
 .btn-danger{background:#dc2626}
-.btn-danger:hover{background:#b91c1c}
+.filtre{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px;margin-bottom:10px}
+
+/* ECRANS BLOCAGE */
+#ecranLogin,#ecranLicence{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center}
+.licence-box{background:white;border-radius:16px;padding:25px;margin:20px;max-width:400px;text-align:center}
+.licence-box h2{color:#1e3a8a;margin-top:0}
+.prix{font-size:36px;color:#059669;font-weight:bold;margin:15px 0}
+.btn-payer{background:#059669;font-size:18px;padding:15px}
+.jours-restants{color:#2563eb;font-weight:bold;font-size:16px}
 </style>
 </head>
 <body>
 
+<!-- 1. ECRAN CONNEXION -->
+<div id="ecranLogin">
+<div class="licence-box">
+<h2>📱 Connexion GMB24 Pro</h2>
+<p>Entre ton numéro WhatsApp</p>
+<input type="tel" id="inputNumero" placeholder="+228 90 12 34 56" style="font-size:18px;text-align:center">
+<button class="btn-payer" onclick="seConnecter()">Se Connecter</button>
+<p style="font-size:12px;color:#64748b;margin-top:10px">5000F/mois après 30j gratuit</p>
+</div>
+</div>
+
+<!-- 2. ECRAN LICENCE -->
+<div id="ecranLicence" style="display:none">
+<div class="licence-box">
+<h2>🔒 App Verrouillée</h2>
+<p>Essai 30 jours terminé</p>
+<div class="prix">5 000 FCFA / mois</div>
+<p class="jours-restants" id="joursRestants"></p>
+<button class="btn-payer" onclick="payerLicence()">💳 Payer et Débloquer</button>
+<p style="font-size:12px;color:#64748b;margin-top:15px">Moov/Flooz: +22896766875</p>
+</div>
+</div>
+
+<!-- 3. APP -->
+<div id="appContenu" style="display:none">
+
 <div class="header">
 <h2>GMB24 Pro Fiscal</h2>
 <div class="user-info">
-<span><span class="name">SAGUEDA wen-bakpéta</span> | <span id="userPhone">+22896766875</span></span>
+<span><span class="name" id="nomHeader">SAGUEDA wen-bakpéta</span> | <span id="userPhone"></span></span>
 <button class="btn-deco" onclick="deconnexion()">Déconnexion</button>
 </div>
 </div>
@@ -56,409 +87,425 @@ tr.total{background:#f1f5f9;font-weight:bold}
 <div class="content">
 
 <div class="menu">
-<div class="active" onclick="showSection('dashboard')">📊 Dashboard</div>
-<div onclick="showSection('fiscal')">⚙️ Paramètres</div>
+<div class="active" onclick="showSection('dashboard', this)">📊 Ventes</div>
+<div onclick="showSection('fiscal', this)">⚙️ Paramètres</div>
 </div>
 
-<!-- DASHBOARD -->
+<!-- DASHBOARD VENTES JOURNALIERES -->
 <div id="dashboard" class="section">
+<div class="filtre">
+<label>📅 Filtrer par mois :</label>
+<input type="month" id="filtreMois" onchange="afficherInventaire()">
+<button onclick="cloturerMois()" class="orange">🔒 Clôturer Mois & Générer CFE</button>
+</div>
+
 <div class="grid">
-<div class="card">
-<div class="kpi-label">💰 Ventes TTC Mois</div>
-<div class="kpi-value" id="ventesMois">0 FCFA</div>
-</div>
-<div class="card">
-<div class="kpi-label">📉 Dépenses Mois</div>
-<div class="kpi-value" id="depensesMois">0 FCFA</div>
-</div>
-<div class="card">
-<div class="kpi-label">📊 TVA Collectée</div>
-<div class="kpi-value" id="tvaMois">0 FCFA</div>
-</div>
-<div class="card">
-<div class="kpi-label">💵 Profit Net</div>
-<div class="kpi-value green" id="profitNet">0 FCFA</div>
-</div>
+<div class="card"><div class="kpi-label">💰 Ventes TTC Mois</div><div class="kpi-value" id="ventesMois">0 FCFA</div></div>
+<div class="card"><div class="kpi-label">📉 Dépenses Mois</div><div class="kpi-value" id="depensesMois">0 FCFA</div></div>
+<div class="card"><div class="kpi-label">📊 TVA Collectée</div><div class="kpi-value" id="tvaMois">0 FCFA</div></div>
+<div class="card"><div class="kpi-label">💵 Profit Net</div><div class="kpi-value green" id="profitNet">0 FCFA</div></div>
 </div>
 
 <div class="card">
-<h3>📋 Saisir les Ventes du Mois</h3>
-<label>Nom du Client :</label>
-<input type="text" id="nomClient" placeholder="Ex: M. Kossi">
+<h3>📝 Enregistrer Vente du Jour</h3>
+<label>Date de vente :</label>
+<input type="date" id="dateVente">
 
-<label>Bien acheté / Article :</label>
-<input type="text" id="article" placeholder="Ex: Sac de riz 50kg">
-
-<label>Quantité :</label>
-<input type="number" id="quantite" placeholder="1" min="1" value="1">
-
-<label>Prix Unitaire TTC FCFA :</label>
-<input type="number" id="prixTTC" placeholder="25000" onblur="calculerLigne()">
-
-<label>Montant HT calculé :</label>
-<input type="number" id="montantHT" readonly style="background:#f1f5f9">
-
-<button class="green" onclick="ajouterLigne()">➕ Ajouter à l’inventaire</button>
+<label>Nom du Client :</label><input type="text" id="nomClient" placeholder="Ex: M. Kossi">
+<label>Article vendu :</label><input type="text" id="article" placeholder="Ex: Sac riz 50kg">
+<label>Quantité :</label><input type="number" id="quantite" value="1" min="1">
+<label>Prix TTC FCFA :</label><input type="number" id="prixTTC" onblur="calculerLigne()">
+<label>Montant HT :</label><input type="number" id="montantHT" readonly style="background:#f1f5f9">
+<button class="green" onclick="ajouterLigne()">➕ Enregistrer la vente</button>
 
 <table id="tableInventaire">
-<thead>
-<tr><th>Client</th><th>Article</th><th>Qté</th><th>TTC</th><th>HT</th><th>Action</th></tr>
-</thead>
+<thead><tr><th>Date</th><th>Client</th><th>Article</th><th>Qté</th><th>TTC</th><th>HT</th><th>Action</th></tr></thead>
 <tbody></tbody>
-<tfoot>
-<tr class="total">
-<td colspan="3">TOTAUX</td>
-<td id="totalTTC">0</td>
-<td id="totalHT">0</td>
-<td></td>
-</tr>
-</tfoot>
+<tfoot><tr class="total"><td colspan="4">TOTAL MOIS</td><td id="totalTTC">0</td><td id="totalHT">0</td><td></td></tr></tfoot>
 </table>
 </div>
 
 <div class="card">
-<h3>📋 Clôture Mensuelle - CFE</h3>
-<p style="font-size:14px;color:#64748b;margin:8px 0">Génère la fiche complète avec nom boutique + totaux</p>
-<button onclick="genererInventaire()">📄 Générer Fiche Inventaire</button>
-<button class="green" onclick="exporterPDF()">📥 Exporter en PDF</button>
+<h3>📋 Résultat Clôture Mensuelle</h3>
 <div id="resultatInventaire"></div>
-</div>
-
-<div class="alert">
-⚠️ Vérifie tes taux dans "Paramètres" avant de générer. Fiche informative pour OTR.
 </div>
 </div>
 
 <!-- PARAMETRES -->
 <div id="fiscal" class="section" style="display:none">
 <div class="card">
-<h3>👤 Informations Boutique</h3>
-
-<label>Nom de la Boutique :</label>
-<input type="text" id="nomBoutique" value="Ma Boutique" onblur="saveFiscal()">
-
-<label>Nom & Prénom Gérant :</label>
-<input type="text" id="nomCreateur" value="SAGUEDA wen-bakpéta" onblur="saveFiscal()">
-
-<label>Type de contribuable :</label>
-<select id="typeContribuable" onchange="saveFiscal()">
-<option value="PP">Personne Physique</option>
-<option value="PM">Personne Morale</option>
-</select>
-
-<label>Numéro IFU OTR :</label>
-<input type="text" id="ifu" placeholder="T000123456789" onblur="saveFiscal()">
-
-<label>Numéro Déclaration CFE :</label>
-<input type="text" id="numCFE" placeholder="CFE/LOME/001234" onblur="saveFiscal()">
+<h3>👤 Boutique</h3>
+<label>Nom Boutique :</label><input type="text" id="nomBoutique" onblur="saveFiscal()">
+<label>Gérant :</label><input type="text" id="nomCreateur" onblur="saveFiscal()">
+<label>IFU :</label><input type="text" id="ifu" onblur="saveFiscal()">
+<label>CFE :</label><input type="text" id="numCFE" onblur="saveFiscal()">
 </div>
 
 <div class="card">
-<h3>📊 Tes Taux d'Imposition OTR</h3>
-
-<label>Taux Impôt Bénéfice IS/IRPP % :</label>
-<input type="number" id="tauxImpot" placeholder="27" step="0.1" onblur="saveFiscal()">
-
-<label>Taux TVA % :</label>
-<input type="number" id="tauxTVA" value="18" step="0.1" onblur="saveFiscal()">
-
-<label>Taux TVA OTR 1% :</label>
-<input type="number" id="tauxTvaOtr" value="1" step="0.1" onblur="saveFiscal()">
-
-<div class="badge" id="resumeTaux">Chargement...</div>
+<h3>📊 Taux OTR</h3>
+<label>IS/IRPP % :</label><input type="number" id="tauxImpot" step="0.1" onblur="saveFiscal()">
+<label>TVA % :</label><input type="number" id="tauxTVA" step="0.1" onblur="saveFiscal()">
+<label>TVA OTR 1% :</label><input type="number" id="tauxTvaOtr" step="0.1" onblur="saveFiscal()">
+<div class="badge" id="resumeTaux"></div>
 </div>
 
 <div class="card">
 <h3>💰 Dépenses du Mois</h3>
-<label>Total Dépenses FCFA :</label>
-<input type="number" id="inputDepenses" placeholder="980000" onblur="updateDashboard()">
-<small>Loyer, électricité, transport, achats marchandises...</small>
+<label>Total Dépenses :</label><input type="number" id="inputDepenses" onblur="saveFiscal()">
+<small>Loyer, électricité, achats marchandises...</small>
 </div>
 
-<div class="alert">
-📞 Taux inconnus? Regarde ton IFU OTR ou demande à ton centre des impôts.
+<div class="card">
+<h3>🔑 Licence</h3>
+<p>Statut: <b id="statutLicence"></b></p>
+<p>Expire le: <b id="dateExpire"></b></p>
+<button onclick="payerLicence()">Renouveler 5000F</button>
+</div>
+
+<div class="card">
+<h3>🛠️ Dépannage Admin</h3>
+<label>Code de déblocage :</label><input type="text" id="codeDeblocage">
+<button class="green" onclick="debloquer()">Débloquer 30 jours</button>
 </div>
 </div>
 
+</div>
 </div>
 
 <script>
 let inventaire = JSON.parse(localStorage.getItem('inventaire') || '[]');
 
-// CHARGEMENT
-window.addEventListener('load', () => {
-document.getElementById('nomBoutique').value = localStorage.getItem('nomBoutique') || 'Ma Boutique';
-document.getElementById('nomCreateur').value = localStorage.getItem('nomCreateur') || 'SAGUEDA wen-bakpéta';
-document.getElementById('userPhone').innerText = localStorage.getItem('userPhone') || '+22896766875';
-document.getElementById('typeContribuable').value = localStorage.getItem('typeContribuable') || 'PP';
-document.getElementById('ifu').value = localStorage.getItem('ifu') || '';
-document.getElementById('numCFE').value = localStorage.getItem('numCFE') || '';
-document.getElementById('tauxImpot').value = localStorage.getItem('tauxImpot') || '27';
-document.getElementById('tauxTVA').value = localStorage.getItem('tauxTVA') || '18';
-document.getElementById('tauxTvaOtr').value = localStorage.getItem('tauxTvaOtr') || '1';
-document.getElementById('inputDepenses').value = localStorage.getItem('depensesMois') || '';
+// ===== CONNEXION + LICENCE =====
+function seConnecter() {
+  let numero = document.getElementById('inputNumero').value.trim();
+  numero = numero.replace(/\s/g, '').replace(/-/g, '');
+  if(!numero.startsWith('+228')) numero = '+228' + numero.replace(/^0/, '');
+  if(numero.length < 12) {alert('Numéro invalide'); return;}
+  localStorage.setItem('userPhone', numero);
+  document.getElementById('userPhone').innerText = numero;
+  document.getElementById('ecranLogin').style.display = 'none';
+  checkLicence();
+}
 
-updateResumeTaux();
-afficherInventaire();
-updateDashboard();
+function checkLicence() {
+  let dateInstall = localStorage.getItem('dateInstall');
+  let dateExpire = localStorage.getItem('dateExpire');
+  let licenceActive = localStorage.getItem('licenceActive');
+  
+  if(!dateInstall) {
+    let install = new Date();
+    let expire = new Date();
+    expire.setDate(expire.getDate() + 30);
+    localStorage.setItem('dateInstall', install.toISOString());
+    localStorage.setItem('dateExpire', expire.toISOString());
+    localStorage.setItem('licenceActive', 'false');
+    dateExpire = expire.toISOString();
+  }
+  
+  let now = new Date();
+  let expire = new Date(dateExpire);
+  
+  if(licenceActive === 'true' || now < expire) {
+    document.getElementById('appContenu').style.display = 'block';
+    document.getElementById('ecranLicence').style.display = 'none';
+    let joursRest = Math.ceil((expire - now) / (1000*60*60*24));
+    document.getElementById('statutLicence').innerText = licenceActive === 'true' ? '✅ Active' : '🆓 Essai';
+    document.getElementById('joursRestants').innerText = licenceActive === 'true' ? 'Licence active' : `Essai: ${joursRest} jours restants`;
+    document.getElementById('dateExpire').innerText = expire.toLocaleDateString('fr-FR');
+  } else {
+    document.getElementById('appContenu').style.display = 'none';
+    document.getElementById('ecranLicence').style.display = 'flex';
+  }
+}
+
+function payerLicence() {
+  if(confirm('Payé 5000F au +22896766875 ? Clique OK')) {
+    let expire = new Date();
+    expire.setDate(expire.getDate() + 30);
+    localStorage.setItem('dateExpire', expire.toISOString());
+    localStorage.setItem('licenceActive', 'true');
+    alert('✅ Licence 30 jours');
+    location.reload();
+  }
+}
+
+function debloquer() {
+  let code = document.getElementById('codeDeblocage').value.trim();
+  let numero = localStorage.getItem('userPhone');
+  let codeValide = new Date().toISOString().slice(0,10).replace(/-/g,'') + numero;
+  if(code === codeValide) {
+    localStorage.setItem('licenceActive', 'true');
+    let expire = new Date();
+    expire.setDate(expire.getDate() + 30);
+    localStorage.setItem('dateExpire', expire.toISOString());
+    alert('✅ Débloqué 30 jours');
+    location.reload();
+  } else alert('Code incorrect');
+}
+
+function showSection(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+  document.getElementById(id).style.display = 'block';
+  document.querySelectorAll('.menu div').forEach(m => m.classList.remove('active'));
+  if(el) el.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ===== CHARGEMENT =====
+window.addEventListener('load', () => {
+  let numero = localStorage.getItem('userPhone');
+  if(numero) {
+    document.getElementById('ecranLogin').style.display = 'none';
+    document.getElementById('userPhone').innerText = numero;
+    checkLicence();
+  } else {
+    document.getElementById('appContenu').style.display = 'none';
+    document.getElementById('ecranLicence').style.display = 'none';
+    document.getElementById('ecranLogin').style.display = 'flex';
+  }
+  
+  document.getElementById('nomBoutique').value = localStorage.getItem('nomBoutique') || 'Ma Boutique';
+  document.getElementById('nomCreateur').value = localStorage.getItem('nomCreateur') || 'SAGUEDA wen-bakpéta';
+  document.getElementById('nomHeader').innerText = localStorage.getItem('nomCreateur') || 'SAGUEDA wen-bakpéta';
+  document.getElementById('ifu').value = localStorage.getItem('ifu') || '';
+  document.getElementById('numCFE').value = localStorage.getItem('numCFE') || '';
+  document.getElementById('tauxImpot').value = localStorage.getItem('tauxImpot') || '27';
+  document.getElementById('tauxTVA').value = localStorage.getItem('tauxTVA') || '18';
+  document.getElementById('tauxTvaOtr').value = localStorage.getItem('tauxTvaOtr') || '1';
+  document.getElementById('inputDepenses').value = localStorage.getItem('depensesMois') || '';
+  
+  // Met date d'aujourd'hui par défaut
+  document.getElementById('dateVente').valueAsDate = new Date();
+  
+  // Met mois actuel dans filtre
+  let moisActuel = new Date().toISOString().slice(0,7);
+  document.getElementById('filtreMois').value = moisActuel;
+  
+  updateResumeTaux();
+  afficherInventaire();
+  updateDashboard();
 })
 
-// SAUVEGARDE
 function saveFiscal() {
-localStorage.setItem('nomBoutique', document.getElementById('nomBoutique').value);
-localStorage.setItem('nomCreateur', document.getElementById('nomCreateur').value);
-localStorage.setItem('typeContribuable', document.getElementById('typeContribuable').value);
-localStorage.setItem('ifu', document.getElementById('ifu').value);
-localStorage.setItem('numCFE', document.getElementById('numCFE').value);
-localStorage.setItem('tauxImpot', document.getElementById('tauxImpot').value);
-localStorage.setItem('tauxTVA', document.getElementById('tauxTVA').value);
-localStorage.setItem('tauxTvaOtr', document.getElementById('tauxTvaOtr').value);
-localStorage.setItem('depensesMois', document.getElementById('inputDepenses').value);
-updateResumeTaux();
-updateDashboard();
+  localStorage.setItem('nomBoutique', document.getElementById('nomBoutique').value);
+  localStorage.setItem('nomCreateur', document.getElementById('nomCreateur').value);
+  localStorage.setItem('ifu', document.getElementById('ifu').value);
+  localStorage.setItem('numCFE', document.getElementById('numCFE').value);
+  localStorage.setItem('tauxImpot', document.getElementById('tauxImpot').value);
+  localStorage.setItem('tauxTVA', document.getElementById('tauxTVA').value);
+  localStorage.setItem('tauxTvaOtr', document.getElementById('tauxTvaOtr').value);
+  localStorage.setItem('depensesMois', document.getElementById('inputDepenses').value);
+  document.getElementById('nomHeader').innerText = document.getElementById('nomCreateur').value;
+  updateResumeTaux();
+  updateDashboard();
 }
 
 function updateResumeTaux() {
-const taux = document.getElementById('tauxImpot').value;
-const tva = document.getElementById('tauxTVA').value;
-const tvaOtr = document.getElementById('tauxTvaOtr').value;
-document.getElementById('resumeTaux').innerText = `IS/IRPP: ${taux}% | TVA: ${tva}% | TVA OTR: ${tvaOtr}%`;
+  const taux = document.getElementById('tauxImpot').value;
+  const tva = document.getElementById('tauxTVA').value;
+  const tvaOtr = document.getElementById('tauxTvaOtr').value;
+  document.getElementById('resumeTaux').innerText = `IS/IRPP: ${taux}% | TVA: ${tva}% | TVA OTR: ${tvaOtr}%`;
 }
 
-// CALCUL LIGNE
 function calculerLigne() {
-const prixTTC = parseFloat(document.getElementById('prixTTC').value || 0);
-const tauxTVA = parseFloat(document.getElementById('tauxTVA').value || 0) / 100;
-const prixHT = tauxTVA === 0 ? prixTTC : prixTTC / (1 + tauxTVA);
-document.getElementById('montantHT').value = Math.round(prixHT);
+  const prixTTC = parseFloat(document.getElementById('prixTTC').value || 0);
+  const tauxTVA = parseFloat(document.getElementById('tauxTVA').value || 0) / 100;
+  const prixHT = tauxTVA === 0 ? prixTTC : prixTTC / (1 + tauxTVA);
+  document.getElementById('montantHT').value = Math.round(prixHT);
 }
 
-// AJOUTER LIGNE INVENTAIRE
+// ===== ENREGISTRER VENTE JOURNALIERE =====
 function ajouterLigne() {
-const client = document.getElementById('nomClient').value.trim();
-const article = document.getElementById('article').value.trim();
-const qte = parseInt(document.getElementById('quantite').value || 1);
-const prixTTC = parseFloat(document.getElementById('prixTTC').value || 0);
-const prixHT = parseFloat(document.getElementById('montantHT').value || 0);
-
-if(!client || !article || prixTTC <= 0) {
-alert('Remplis Client, Article et Prix TTC');
-return;
+  const dateVente = document.getElementById('dateVente').value;
+  const client = document.getElementById('nomClient').value.trim();
+  const article = document.getElementById('article').value.trim();
+  const qte = parseInt(document.getElementById('quantite').value || 1);
+  const prixTTC = parseFloat(document.getElementById('prixTTC').value || 0);
+  const prixHT = parseFloat(document.getElementById('montantHT').value || 0);
+  
+  if(!dateVente || !client || !article || prixTTC <= 0) {
+    alert('Remplis Date, Client, Article et Prix');
+    return;
+  }
+  
+  inventaire.push({date: dateVente, client, article, qte, prixTTC, prixHT});
+  localStorage.setItem('inventaire', JSON.stringify(inventaire));
+  
+  document.getElementById('nomClient').value = '';
+  document.getElementById('article').value = '';
+  document.getElementById('quantite').value = '1';
+  document.getElementById('prixTTC').value = '';
+  document.getElementById('montantHT').value = '';
+  
+  afficherInventaire();
+  updateDashboard();
 }
 
-inventaire.push({client, article, qte, prixTTC, prixHT});
-localStorage.setItem('inventaire', JSON.stringify(inventaire));
-
-document.getElementById('nomClient').value = '';
-document.getElementById('article').value = '';
-document.getElementById('quantite').value = '1';
-document.getElementById('prixTTC').value = '';
-document.getElementById('montantHT').value = '';
-
-afficherInventaire();
-updateDashboard();
+// ===== FILTRER PAR MOIS =====
+function getInventaireMois() {
+  let moisFiltre = document.getElementById('filtreMois').value;
+  return inventaire.filter(l => l.date.startsWith(moisFiltre));
 }
 
-// AFFICHER TABLEAU
 function afficherInventaire() {
-const tbody = document.querySelector('#tableInventaire tbody');
-tbody.innerHTML = '';
-let totalTTC = 0;
-let totalHT = 0;
-
-inventaire.forEach((ligne, index) => {
-const montantTTC = ligne.prixTTC * ligne.qte;
-const montantHT = ligne.prixHT * ligne.qte;
-totalTTC += montantTTC;
-totalHT += montantHT;
-
-tbody.innerHTML += `
-<tr>
-<td>${ligne.client}</td>
-<td>${ligne.article}</td>
-<td>${ligne.qte}</td>
-<td>${montantTTC.toLocaleString()}</td>
-<td>${montantHT.toLocaleString()}</td>
-<td><button class="btn-small btn-danger" onclick="supprimerLigne(${index})">🗑️</button></td>
-</tr>
-`;
-});
-
-document.getElementById('totalTTC').innerText = totalTTC.toLocaleString();
-document.getElementById('totalHT').innerText = totalHT.toLocaleString();
+  let inventaireMois = getInventaireMois();
+  const tbody = document.querySelector('#tableInventaire tbody');
+  tbody.innerHTML = '';
+  let totalTTC = 0;
+  let totalHT = 0;
+  
+  inventaireMois.forEach((ligne, index) => {
+    const montantTTC = ligne.prixTTC * ligne.qte;
+    const montantHT = ligne.prixHT * ligne.qte;
+    totalTTC += montantTTC;
+    totalHT += montantHT;
+    let indexGlobal = inventaire.indexOf(ligne);
+    tbody.innerHTML += `<tr><td>${ligne.date}</td><td>${ligne.client}</td><td>${ligne.article}</td><td>${ligne.qte}</td><td>${montantTTC.toLocaleString()}</td><td>${montantHT.toLocaleString()}</td><td><button class="btn-small btn-danger" onclick="supprimerLigne(${indexGlobal})">🗑️</button></td></tr>`;
+  });
+  
+  document.getElementById('totalTTC').innerText = totalTTC.toLocaleString();
+  document.getElementById('totalHT').innerText = totalHT.toLocaleString();
 }
 
-// SUPPRIMER LIGNE
 function supprimerLigne(index) {
-inventaire.splice(index, 1);
-localStorage.setItem('inventaire', JSON.stringify(inventaire));
-afficherInventaire();
-updateDashboard();
+  if(confirm('Supprimer cette vente?')) {
+    inventaire.splice(index, 1);
+    localStorage.setItem('inventaire', JSON.stringify(inventaire));
+    afficherInventaire();
+    updateDashboard();
+  }
 }
 
-// CALCULS DASHBOARD
+// ===== CALCULS + CLOTURE AUTO =====
 function updateDashboard() {
-const totalTTC = inventaire.reduce((sum, l) => sum + (l.prixTTC * l.qte), 0);
-const depenses = parseFloat(document.getElementById('inputDepenses').value || 0);
-
-const calc = calculerProfitNet(totalTTC, depenses);
-
-document.getElementById('ventesMois').innerText = totalTTC.toLocaleString() + ' FCFA';
-document.getElementById('depensesMois').innerText = depenses.toLocaleString() + ' FCFA';
-document.getElementById('tvaMois').innerText = calc.tvaCollectee.toLocaleString() + ' FCFA';
-document.getElementById('profitNet').innerText = calc.profitNet.toLocaleString() + ' FCFA';
+  let inventaireMois = getInventaireMois();
+  const totalTTC = inventaireMois.reduce((sum, l) => sum + (l.prixTTC * l.qte), 0);
+  const depenses = parseFloat(document.getElementById('inputDepenses').value || 0);
+  const calc = calculerProfitNet(totalTTC, depenses);
+  
+  document.getElementById('ventesMois').innerText = totalTTC.toLocaleString() + ' FCFA';
+  document.getElementById('depensesMois').innerText = depenses.toLocaleString() + ' FCFA';
+  document.getElementById('tvaMois').innerText = calc.tvaCollectee.toLocaleString() + ' FCFA';
+  document.getElementById('profitNet').innerText = calc.profitNet.toLocaleString() + ' FCFA';
 }
 
 function calculerProfitNet(ventesTTC, depenses) {
-const tauxImpot = parseFloat(document.getElementById('tauxImpot').value || 0) / 100;
-const tauxTVA = parseFloat(document.getElementById('tauxTVA').value || 0) / 100;
-const tauxTvaOtr = parseFloat(document.getElementById('tauxTvaOtr').value || 0) / 100;
-const type = document.getElementById('typeContribuable').value;
-
-const ventesHT = tauxTVA === 0 ? ventesTTC : ventesTTC / (1 + tauxTVA);
-const tva = ventesTTC - ventesHT;
-const benefice = ventesHT - depenses;
-const impot = benefice > 0 ? benefice * tauxImpot : 0;
-const tvaOtr = ventesTTC * tauxTvaOtr;
-const profitNet = benefice - impot - tvaOtr;
-
-return {
-ventesHT: Math.round(ventesHT),
-tvaCollectee: Math.round(tva),
-beneficeBrut: Math.round(benefice),
-impot: Math.round(impot),
-typeImpot: type==='PP'?'IRPP':'IS',
-tvaOtr: Math.round(tvaOtr),
-profitNet: Math.round(profitNet)
-};
+  const tauxImpot = parseFloat(document.getElementById('tauxImpot').value || 0) / 100;
+  const tauxTVA = parseFloat(document.getElementById('tauxTVA').value || 0) / 100;
+  const tauxTvaOtr = parseFloat(document.getElementById('tauxTvaOtr').value || 0) / 100;
+  const ventesHT = tauxTVA === 0 ? ventesTTC : ventesTTC / (1 + tauxTVA);
+  const tva = ventesTTC - ventesHT;
+  const benefice = ventesHT - depenses;
+  const impot = benefice > 0 ? benefice * tauxImpot : 0;
+  const tvaOtr = ventesTTC * tauxTvaOtr;
+  const profitNet = benefice - impot - tvaOtr;
+  return {ventesHT: Math.round(ventesHT), tvaCollectee: Math.round(tva), beneficeBrut: Math.round(benefice), impot: Math.round(impot), tvaOtr: Math.round(tvaOtr), profitNet: Math.round(profitNet)};
 }
 
-// GENERER FICHE INVENTAIRE
-function genererInventaire() {
-const ventesTTC = inventaire.reduce((sum, l) => sum + (l.prixTTC * l.qte), 0);
-const depenses = parseFloat(localStorage.getItem('depensesMois') || 0);
-const calc = calculerProfitNet(ventesTTC, depenses);
-const nomBoutique = document.getElementById('nomBoutique').value;
-const nom = document.getElementById('nomCreateur').value;
-const tauxImpot = document.getElementById('tauxImpot').value;
-const tauxTVA = document.getElementById('tauxTVA').value;
-const tauxTvaOtr = document.getElementById('tauxTvaOtr').value;
-const ifu = document.getElementById('ifu').value;
-const numCFE = document.getElementById('numCFE').value;
-const mois = new Date().toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'});
-
-let lignesHTML = '';
-inventaire.forEach(l => {
-const ttc = l.prixTTC * l.qte;
-const ht = l.prixHT * l.qte;
-lignesHTML += `<tr><td>${l.client}</td><td>${l.article}</td><td>${l.qte}</td><td>${ttc.toLocaleString()}</td><td>${ht.toLocaleString()}</td></tr>`;
-});
-
-document.getElementById('resultatInventaire').innerHTML = `
-<div class="result-box" id="fichePDF">
-<h3 style="text-align:center;margin:0 0 10px 0">${nomBoutique.toUpperCase()}</h3>
-<p style="text-align:center;margin:0 0 15px 0;font-size:13px">Fiche d'Inventaire Mensuelle - ${mois}</p>
-<p><b>Gérant:</b> ${nom} | <b>IFU:</b> ${ifu || 'N/A'} | <b>CFE:</b> ${numCFE || 'N/A'}</p>
-<p><b>Taux appliqués:</b> ${calc.typeImpot} ${tauxImpot}% | TVA ${tauxTVA}% | TVA OTR ${tauxTvaOtr}%</p>
-
-<table>
-<thead><tr><th>Client</th><th>Article</th><th>Qté</th><th>TTC FCFA</th><th>HT FCFA</th></tr></thead>
-<tbody>${lignesHTML}</tbody>
-<tr class="total"><td colspan="3">TOTAUX</td><td>${ventesTTC.toLocaleString()}</td><td>${calc.ventesHT.toLocaleString()}</td></tr>
-</table>
-
-<br><b>Dépenses du mois:</b> ${depenses.toLocaleString()} FCFA<br>
-<b>Bénéfice Brut:</b> ${calc.beneficeBrut.toLocaleString()} FCFA<br>
-<b>${calc.typeImpot} ${tauxImpot}%:</b> ${calc.impot.toLocaleString()} FCFA<br>
-<b>TVA Collectée ${tauxTVA}%:</b> ${calc.tvaCollectee.toLocaleString()} FCFA<br>
-<b>TVA OTR ${tauxTvaOtr}%:</b> ${calc.tvaOtr.toLocaleString()} FCFA<br>
-<b style="color:#059669;font-size:16px">MONTANT À PAYER OTR: ${(calc.impot + calc.tvaCollectee + calc.tvaOtr).toLocaleString()} FCFA</b><br>
-<b>Profit Net:</b> ${calc.profitNet.toLocaleString()} FCFA
-</div>
-`;
+// ===== CLOTURER LE MOIS AUTO =====
+function cloturerMois() {
+  let inventaireMois = getInventaireMois();
+  if(inventaireMois.length === 0) {
+    alert('Aucune vente enregistrée ce mois');
+    return;
+  }
+  
+  const ventesTTC = inventaireMois.reduce((sum, l) => sum + (l.prixTTC * l.qte), 0);
+  const depenses = parseFloat(document.getElementById('inputDepenses').value || 0);
+  const calc = calculerProfitNet(ventesTTC, depenses);
+  const nomBoutique = document.getElementById('nomBoutique').value;
+  const nom = document.getElementById('nomCreateur').value;
+  const moisFiltre = document.getElementById('filtreMois').value;
+  const mois = new Date(moisFiltre + '-01').toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'});
+  
+  let lignesHTML = '';
+  inventaireMois.forEach(l => {
+    const ttc = l.prixTTC * l.qte;
+    const ht = l.prixHT * l.qte;
+    lignesHTML += `<tr><td>${l.date}</td><td>${l.client}</td><td>${l.article}</td><td>${l.qte}</td><td>${ttc.toLocaleString()}</td><td>${ht.toLocaleString()}</td></tr>`;
+  });
+  
+  document.getElementById('resultatInventaire').innerHTML = `
+  <div class="result-box">
+  <h3 style="text-align:center">${nomBoutique.toUpperCase()}</h3>
+  <p style="text-align:center">FICHE INVENTAIRE MENSUELLE - ${mois}</p>
+  <p><b>Gérant:</b> ${nom} | <b>IFU:</b> ${document.getElementById('ifu').value} | <b>CFE:</b> ${document.getElementById('numCFE').value}</p>
+  <p><b>Taux:</b> IS/IRPP ${document.getElementById('tauxImpot').value}% | TVA ${document.getElementById('tauxTVA').value}% | TVA OTR ${document.getElementById('tauxTvaOtr').value}%</p>
+  
+  <table><thead><tr><th>Date</th><th>Client</th><th>Article</th><th>Qté</th><th>TTC</th><th>HT</th></tr></thead>
+  <tbody>${lignesHTML}</tbody>
+  <tr class="total"><td colspan="4">TOTAL ${mois}</td><td>${ventesTTC.toLocaleString()}</td><td>${calc.ventesHT.toLocaleString()}</td></tr></table>
+  
+  <br><b>Dépenses du mois:</b> ${depenses.toLocaleString()} FCFA<br>
+  <b>Bénéfice Brut:</b> ${calc.beneficeBrut.toLocaleString()} FCFA<br>
+  <b>IS/IRPP ${document.getElementById('tauxImpot').value}%:</b> ${calc.impot.toLocaleString()} FCFA<br>
+  <b>TVA Collectée:</b> ${calc.tvaCollectee.toLocaleString()} FCFA<br>
+  <b>TVA OTR 1%:</b> ${calc.tvaOtr.toLocaleString()} FCFA<br>
+  <b style="color:#059669;font-size:18px">MONTANT À PAYER OTR: ${(calc.impot + calc.tvaCollectee + calc.tvaOtr).toLocaleString()} FCFA</b><br>
+  <b>Profit Net:</b> ${calc.profitNet.toLocaleString()} FCFA
+  
+  <button class="green" onclick="exporterPDF()">📥 Exporter PDF pour OTR</button>
+  <button class="btn-danger" onclick="archiverMois()">🗄️ Archiver & Nouveau Mois</button>
+  </div>`;
 }
 
-// EXPORT PDF
 function exporterPDF() {
-if(inventaire.length === 0) {
-alert('Ajoute d\'abord des ventes à l\'inventaire');
-return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const nomBoutique = document.getElementById('nomBoutique').value;
+  const moisFiltre = document.getElementById('filtreMois').value;
+  const mois = new Date(moisFiltre + '-01').toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'});
+  
+  doc.setFontSize(16);
+  doc.text(nomBoutique.toUpperCase(), 105, 15, {align: 'center'});
+  doc.setFontSize(11);
+  doc.text(`Fiche Inventaire Mensuelle - ${mois}`, 105, 23, {align: 'center'});
+  
+  let y = 40;
+  doc.setFontSize(8);
+  doc.text('Date', 14, y);
+  doc.text('Client', 32, y);
+  doc.text('Article', 60, y);
+  doc.text('Qté', 100, y);
+  doc.text('TTC', 120, y);
+  doc.text('HT', 150, y);
+  y += 6;
+  
+  let inventaireMois = getInventaireMois();
+  inventaireMois.forEach(l => {
+    const ttc = l.prixTTC * l.qte;
+    const ht = l.prixHT * l.qte;
+    doc.text(l.date, 14, y);
+    doc.text(l.client.substring(0,8), 32, y);
+    doc.text(l.article.substring(0,7), 60, y);
+    doc.text(String(l.qte), 100, y);
+    doc.text(ttc.toLocaleString(), 120, y);
+    doc.text(ht.toLocaleString(), 150, y);
+    y += 6;
+    if(y > 270) {doc.addPage(); y = 20;}
+  });
+  
+  doc.save(`CFE_${nomBoutique}_${moisFiltre}.pdf`);
 }
 
-const { jsPDF } = window.jspdf;
-const doc = new jsPDF();
-const nomBoutique = document.getElementById('nomBoutique').value;
-const nom = document.getElementById('nomCreateur').value;
-const mois = new Date().toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'});
-
-doc.setFontSize(16);
-doc.text(nomBoutique.toUpperCase(), 105, 15, {align: 'center'});
-doc.setFontSize(11);
-doc.text(`Fiche d'Inventaire - ${mois}`, 105, 23, {align: 'center'});
-doc.setFontSize(10);
-doc.text(`Gérant: ${nom}`, 14, 35);
-doc.text(`IFU: ${document.getElementById('ifu').value || 'N/A'}`, 14, 42);
-doc.text(`CFE: ${document.getElementById('numCFE').value || 'N/A'}`, 14, 49);
-
-let y = 60;
-doc.text('CLIENT', 14, y);
-doc.text('ARTICLE', 50, y);
-doc.text('QTE', 100, y);
-doc.text('TTC', 120, y);
-doc.text('HT', 150, y);
-y += 6;
-
-inventaire.forEach(l => {
-const ttc = l.prixTTC * l.qte;
-const ht = l.prixHT * l.qte;
-doc.text(l.client.substring(0,15), 14, y);
-doc.text(l.article.substring(0,12), 50, y);
-doc.text(String(l.qte), 100, y);
-doc.text(ttc.toLocaleString(), 120, y);
-doc.text(ht.toLocaleString(), 150, y);
-y += 6;
-});
-
-const ventesTTC = inventaire.reduce((sum, l) => sum + (l.prixTTC * l.qte), 0);
-const calc = calculerProfitNet(ventesTTC, parseFloat(document.getElementById('inputDepenses').value || 0));
-
-y += 8;
-doc.line(14, y, 196, y);
-y += 6;
-doc.text(`TOTAL VENTES TTC: ${ventesTTC.toLocaleString()} FCFA`, 14, y);
-y += 6;
-doc.text(`TOTAL VENTES HT: ${calc.ventesHT.toLocaleString()} FCFA`, 14, y);
-y += 6;
-doc.text(`DEPENSES: ${document.getElementById('inputDepenses').value} FCFA`, 14, y);
-y += 6;
-doc.text(`BENEFICE BRUT: ${calc.beneficeBrut.toLocaleString()} FCFA`, 14, y);
-y += 8;
-doc.text(`${calc.typeImpot} ${document.getElementById('tauxImpot').value}%: ${calc.impot.toLocaleString()} FCFA`, 14, y);
-y += 6;
-doc.text(`TVA ${document.getElementById('tauxTVA').value}%: ${calc.tvaCollectee.toLocaleString()} FCFA`, 14, y);
-y += 6;
-doc.text(`TVA OTR ${document.getElementById('tauxTvaOtr').value}%: ${calc.tvaOtr.toLocaleString()} FCFA`, 14, y);
-y += 8;
-doc.setFontSize(12);
-doc.text(`MONTANT A PAYER OTR: ${(calc.impot + calc.tvaCollectee + calc.tvaOtr).toLocaleString()} FCFA`, 14, y);
-y += 6;
-doc.setFontSize(10);
-doc.text(`PROFIT NET: ${calc.profitNet.toLocaleString()} FCFA`, 14, y);
-
-doc.save(`Inventaire_${nomBoutique}_${mois.replace(' ', '_')}.pdf`);
-}
-
-// MENU + DECONNEXION
-function showSection(id) {
-document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
-document.getElementById(id).style.display = 'block';
-document.querySelectorAll('.menu div').forEach(m => m.classList.remove('active'));
-event.target.classList.add('active');
+function archiverMois() {
+  if(confirm('Archiver ce mois et vider pour nouveau mois?')) {
+    let moisFiltre = document.getElementById('filtreMois').value;
+    inventaire = inventaire.filter(l => !l.date.startsWith(moisFiltre));
+    localStorage.setItem('inventaire', JSON.stringify(inventaire));
+    document.getElementById('inputDepenses').value = '';
+    saveFiscal();
+    afficherInventaire();
+    updateDashboard();
+    document.getElementById('resultatInventaire').innerHTML = '<p style="color:green">✅ Mois archivé. Vous pouvez saisir les ventes du nouveau mois.</p>';
+  }
 }
 
 function deconnexion() {
-if(confirm('Déconnexion?')) {
-window.location.href = 'index.html';
+  if(confirm('Déconnexion?')) {
+    localStorage.removeItem('userPhone');
+    location.reload();
+  }
 }
 </script>
 
