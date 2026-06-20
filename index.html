@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GMB24 Pro - Connexion SMS</title>
 <meta name="theme-color" content="#2563eb">
-<link rel="manifest" href="/GMB24-RAA-/manifest.json">
+<link rel="manifest" href="./manifest.json">
 <style>
 body{font-family:Arial;background:#1a365d;color:white;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
 .card{background:white;color:#1a365d;padding:25px;border-radius:12px;max-width:350px;width:90%;text-align:center;box-shadow:0 4px 15px rgba(0,0,0,0.3)}
@@ -120,7 +120,7 @@ btn.innerText = 'Vérifier Code';
 <script>
 // Enregistrement Service Worker pour PWA
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/GMB24-RAA-/service-worker.js');
+  navigator.serviceWorker.register('./service-worker.js');
 }
 </script>
 </body>
