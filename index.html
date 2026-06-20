@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GMB24 Pro - Connexion SMS</title>
+<title>GMB24 Pro - Connexion Email</title>
 <meta name="theme-color" content="#2563eb">
 <link rel="manifest" href="./manifest.json">
 <style>
@@ -13,25 +13,30 @@ input,button{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px s
 button{background:#2563eb;color:white;border:none;font-weight:bold;cursor:pointer;transition:0.2s}
 button:hover{background:#1d4ed8}
 button:disabled{background:#94a3b8;cursor:not-allowed}
-#recaptcha-container{margin:10px 0;display:flex;justify-content:center}
 #msg{font-size:13px;margin-top:10px;min-height:20px}
 h2{margin-top:0;color:#1a365d}
+.switch{font-size:13px;margin-top:15px}
+.switch a{color:#2563eb;text-decoration:none;font-weight:bold;cursor:pointer}
 </style>
 </head>
 <body>
 <div class="card">
 <h2>GMB24 Pro</h2>
-<div id="etape1">
-<p>Entrez votre numéro Togo</p>
-<input type="tel" id="phone" placeholder="+228 90 00 00 00" value="+228">
-<div id="recaptcha-container"></div>
-<button id="btn-sms" onclick="envoyerSMS()">Envoyer Code SMS</button>
+
+<div id="inscription">
+<p>Créer un compte</p>
+<input type="email" id="email" placeholder="ton@email.com">
+<input type="password" id="password" placeholder="Mot de passe 6-16 caractères" maxlength="16">
+<button id="btn-signup" onclick="creerCompte()">S'inscrire</button>
+<p class="switch">Déjà un compte ? <a onclick="afficherConnexion()">Se connecter</a></p>
 </div>
 
-<div id="etape2" style="display:none">
-<p>Code reçu par SMS</p>
-<input type="text" id="code" placeholder="6 chiffres" maxlength="6">
-<button id="btn-code" onclick="verifierCode()">Vérifier Code</button>
+<div id="connexion" style="display:none">
+<p>Connexion</p>
+<input type="email" id="login-email" placeholder="ton@email.com">
+<input type="password" id="login-password" placeholder="Mot de passe">
+<button id="btn-login" onclick="seConnecter()">Se connecter</button>
+<p class="switch">Pas de compte ? <a onclick="afficherInscription()">S'inscrire</a></p>
 </div>
 
 <p id="msg"></p>
@@ -39,81 +44,96 @@ h2{margin-top:0;color:#1a365d}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
 apiKey: "AIzaSyCBYnjsBMJGeR57Kk3FX9zeIplE5EFkcIY",
 authDomain: "gmb24-raa.firebaseapp.com",
+databaseURL: "https://gmb24-raa-default-rtdb.europe-west1.firebasedatabase.app",
 projectId: "gmb24-raa",
 storageBucket: "gmb24-raa.firebasestorage.app",
 messagingSenderId: "558507911211",
-appId: "1:558507911211:web:5cdc99c082fe653684626e"
+appId: "1:558507911211:web:5cdc99c082fe653684626e",
+measurementId: "G-KVHFHTJVFN"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-size: 'normal',
-callback: function() {}
-});
+// Switch entre inscription/connexion
+window.afficherConnexion = function() {
+document.getElementById('inscription').style.display = 'none';
+document.getElementById('connexion').style.display = 'block';
+document.getElementById('msg').innerText = '';
+}
 
-window.envoyerSMS = async function() {
-const phone = document.getElementById('phone').value.trim();
-const btn = document.getElementById('btn-sms');
+window.afficherInscription = function() {
+document.getElementById('connexion').style.display = 'none';
+document.getElementById('inscription').style.display = 'block';
+document.getElementById('msg').innerText = '';
+}
+
+// Créer compte avec Email/MDP
+window.creerCompte = async function() {
+const email = document.getElementById('email').value.trim();
+const password = document.getElementById('password').value;
+const btn = document.getElementById('btn-signup');
 const msg = document.getElementById('msg');
 msg.style.color = 'red';
 
-if (!phone.startsWith('+228') || phone.length < 12) {
-msg.innerText = 'Numéro invalide. Ex: +228 90 00 00 00';
+if (!email.includes('@')) {
+msg.innerText = 'Email invalide';
+return;
+}
+if (password.length < 6) {
+msg.innerText = 'Mot de passe trop court. Minimum 6 caractères';
 return;
 }
 
 btn.disabled = true;
-btn.innerText = 'Envoi en cours...';
+btn.innerText = 'Création...';
 msg.innerText = '';
 
 try {
-window.confirmationResult = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier);
-document.getElementById('etape1').style.display = 'none';
-document.getElementById('etape2').style.display = 'block';
+await createUserWithEmailAndPassword(auth, email, password);
 msg.style.color = 'green';
-msg.innerText = 'SMS envoyé ! Vérifie ton téléphone.';
+msg.innerText = 'Compte créé ! Redirection...';
+setTimeout(function() {
+window.location.href = './dashboard.html';
+}, 1000);
 } catch (error) {
+btn.disabled = false;
+btn.innerText = 'S\'inscrire';
+if (error.code === 'auth/email-already-in-use') {
+msg.innerText = 'Cet email est déjà utilisé. Connecte-toi.';
+} else {
 msg.innerText = 'Erreur: ' + error.message;
-btn.disabled = false;
-btn.innerText = 'Envoyer Code SMS';
-window.recaptchaVerifier.render().then(() => {
-btn.disabled = false;
-});
 }
 }
 
-window.verifierCode = async function() {
-const code = document.getElementById('code').value.trim();
-const btn = document.getElementById('btn-code');
+// Se connecter
+window.seConnecter = async function() {
+const email = document.getElementById('login-email').value.trim();
+const password = document.getElementById('login-password').value;
+const btn = document.getElementById('btn-login');
 const msg = document.getElementById('msg');
-
-if (code.length !== 6) {
-msg.innerText = 'Code doit faire 6 chiffres';
-return;
-}
+msg.style.color = 'red';
 
 btn.disabled = true;
-btn.innerText = 'Vérification...';
+btn.innerText = 'Connexion...';
+msg.innerText = '';
 
 try {
-await window.confirmationResult.confirm(code);
+await signInWithEmailAndPassword(auth, email, password);
 msg.style.color = 'green';
 msg.innerText = 'Connecté ! Redirection...';
 setTimeout(function() {
 window.location.href = './dashboard.html';
 }, 1000);
 } catch (error) {
-msg.style.color = 'red';
-msg.innerText = 'Code incorrect. Réessaie.';
 btn.disabled = false;
-btn.innerText = 'Vérifier Code';
+btn.innerText = 'Se connecter';
+msg.innerText = 'Email ou mot de passe incorrect';
 }
 </script>
 
@@ -124,4 +144,4 @@ if('serviceWorker' in navigator){
 }
 </script>
 </body>
-</html>
+  </html>
