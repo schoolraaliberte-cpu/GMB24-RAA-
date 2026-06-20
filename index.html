@@ -77,13 +77,13 @@ document.getElementById('etape1').style.display = 'none';
 document.getElementById('etape2').style.display = 'block';
 msg.style.color = 'green';
 msg.innerText = 'SMS envoyé ! Vérifie ton téléphone.';
-localStorage.setItem('tempPhone', phone);
 } catch (error) {
 msg.innerText = 'Erreur: ' + error.message;
 btn.disabled = false;
 btn.innerText = 'Envoyer Code SMS';
-window.recaptchaVerifier.clear();
-window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {size: 'normal'});
+window.recaptchaVerifier.render().then(() => {
+btn.disabled = false;
+});
 }
 }
 
@@ -102,8 +102,6 @@ btn.innerText = 'Vérification...';
 
 try {
 await window.confirmationResult.confirm(code);
-localStorage.setItem('userPhone', localStorage.getItem('tempPhone'));
-localStorage.setItem('loggedIn', 'true');
 msg.style.color = 'green';
 msg.innerText = 'Connecté ! Redirection...';
 setTimeout(function() {
@@ -115,6 +113,7 @@ msg.innerText = 'Code incorrect. Réessaie.';
 btn.disabled = false;
 btn.innerText = 'Vérifier Code';
 }
+} // <-- ICI MANQUAIT CETTE ACCOLADE
 </script>
 </body>
 </html>
