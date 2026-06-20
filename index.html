@@ -77,11 +77,13 @@ document.getElementById('etape1').style.display = 'none';
 document.getElementById('etape2').style.display = 'block';
 msg.style.color = 'green';
 msg.innerText = 'SMS envoyé ! Vérifie ton téléphone.';
+localStorage.setItem('tempPhone', phone);
 } catch (error) {
 msg.innerText = 'Erreur: ' + error.message;
 btn.disabled = false;
 btn.innerText = 'Envoyer Code SMS';
-window.recaptchaVerifier.render();
+window.recaptchaVerifier.clear();
+window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {size: 'normal'});
 }
 }
 
@@ -100,6 +102,8 @@ btn.innerText = 'Vérification...';
 
 try {
 await window.confirmationResult.confirm(code);
+localStorage.setItem('userPhone', localStorage.getItem('tempPhone'));
+localStorage.setItem('loggedIn', 'true');
 msg.style.color = 'green';
 msg.innerText = 'Connecté ! Redirection...';
 setTimeout(function() {
@@ -113,4 +117,4 @@ btn.innerText = 'Vérifier Code';
 }
 </script>
 </body>
-</html>
+  </html>
