@@ -3,280 +3,227 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GMB24 Pro Fiscal - Connexion</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1e3a8a">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="GMB24">
+<title>GMB24 - Caisse Pro</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
-* {box-sizing: border-box}
-body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%);margin:0;padding:20px;min-height:100vh;display:flex;align-items:center;justify-content:center}
-.card{background:white;border-radius:16px;padding:25px;max-width:400px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,0.3)}
-h1{color:#1e3a8a;text-align:center;margin:0 0 8px 0;font-size:24px}
-.subtitle{text-align:center;color:#64748b;font-size:14px;margin-bottom:25px}
-.tabs{display:flex;gap:8px;margin-bottom:20px;background:#f1f5f9;padding:4px;border-radius:10px}
-.tab{flex:1;padding:10px;text-align:center;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;color:#64748b}
-.tab.active{background:white;color:#1e3a8a;box-shadow:0 2px 4px rgba(0,0,0,0.1)}
-.section{display:none}
-.section.active{display:block}
-label{display:block;margin-top:12px;font-weight:600;font-size:14px;color:#334155}
-input{width:100%;padding:12px;border:2px solid #cbd5e1;border-radius:8px;margin-top:4px;font-size:15px}
-input:focus{outline:none;border-color:#2563eb}
-button{background:#2563eb;color:white;border:none;padding:14px;border-radius:8px;width:100%;font-weight:bold;margin-top:15px;cursor:pointer;font-size:16px}
-button:hover{background:#1d4ed8}
-button.green{background:#059669}
-button.orange{background:#f59e0b}
-.error{background:#fee2e2;color:#991b1b;padding:10px;border-radius:8px;margin-top:10px;font-size:13px;display:none}
-.success{background:#dcfce7;color:#166534;padding:10px;border-radius:8px;margin-top:10px;font-size:13px;display:none}
-.info{background:#dbeafe;color:#1e40af;padding:12px;border-radius:8px;margin-top:15px;font-size:13px}
+body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;padding:20px}
+.container{max-width:500px;margin:auto;background:white;padding:25px;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.1)}
+input,button{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #cbd5e1}
+button{background:#10b981;color:white;border:none;font-weight:bold;cursor:pointer}
+button:disabled{background:#94a3b8}
+.tabs{display:flex;gap:10px;margin-bottom:20px}
+.tab{flex:1;padding:10px;text-align:center;background:#e2e8f0;cursor:pointer;border-radius:8px}
+.tab.active{background:#3b82f6;color:white}
 .hidden{display:none}
-#recaptcha-container{margin-top:10px}
-.install-btn{background:#7c3aed;margin-top:10px;font-size:14px;padding:10px;display:none}
+#recaptcha-container{margin:10px 0}
 </style>
 </head>
 <body>
-
-<div class="card">
-<h1>GMB24 Pro Fiscal</h1>
-<p class="subtitle">Gestion boutique OTR - Togo</p>
-
-<button id="installBtn" class="install-btn" onclick="installerPWA()">📲 Installer l'application</button>
+<div class="container">
+<h2>🧾 GMB24 Caisse</h2>
 
 <div class="tabs">
-<div class="tab active" onclick="showTab('proprietaire')">👤 Propriétaire</div>
-<div class="tab" onclick="showTab('client')">📱 Client</div>
-</div>
-
-<!-- ONGLET PROPRIETAIRE -->
-<div id="proprietaire" class="section active">
-<label>Email :</label>
-<input type="email" id="emailOwner" placeholder="tonemail@gmail.com">
-<label>Mot de passe :</label>
-<input type="password" id="passwordOwner" placeholder="••••">
-<button onclick="loginOwner()">Se connecter</button>
-<div id="errorOwner" class="error"></div>
-<div class="info">Accès illimité. Pas de licence ni de code.</div>
+<div class="tab active" onclick="showTab('client')">Client</div>
+<div class="tab" onclick="showTab('caisse')">Caisse</div>
 </div>
 
 <!-- ONGLET CLIENT -->
-<div id="client" class="section">
-<div id="etapePhone">
-<label>Numéro WhatsApp :</label>
-<input type="tel" id="phoneClient" placeholder="+228 90 12 34 56">
+<div id="client">
+<h3>Activation Licence</h3>
+<div id="step1">
+<input type="tel" id="phone" placeholder="+228XXXXXXXX" value="+228">
 <div id="recaptcha-container"></div>
-<button onclick="sendOTP()">Recevoir le code SMS</button>
-<div id="errorClient" class="error"></div>
-<div class="info">30 jours gratuits pour tester. Après → licence 5000F/30j</div>
+<button id="btnSend" onclick="sendOTP()">Recevoir SMS</button>
 </div>
 
-<div id="etapeOTP" class="hidden">
-<label>Code SMS reçu :</label>
-<input type="text" id="codeOTP" placeholder="123456" maxlength="6">
-<button class="green" onclick="verifyOTP()">Vérifier</button>
-<button onclick="backToPhone()">← Changer numéro</button>
-<div id="errorOTP" class="error"></div>
+<div id="step2" class="hidden">
+<input type="text" id="otp" placeholder="Code SMS 6 chiffres" maxlength="6">
+<input type="text" id="licenseCode" placeholder="Code GMBXXXX">
+<button onclick="verifyOTP()">Vérifier SMS</button>
+<button onclick="activateLicense()">Activer Licence</button>
 </div>
 
-<div id="etapeLicence" class="hidden">
-<label>Code Licence 6 chiffres :</label>
-<input type="text" id="codeLicence" placeholder="AB12CD" maxlength="6">
-<button class="orange" onclick="activerLicence()">Activer 30 jours</button>
-<button onclick="backToPhone()">← Changer numéro</button>
-<div id="errorLicence" class="error"></div>
-<div id="successLicence" class="success"></div>
-<div class="info">Tu n’as pas de code ? Contacte le propriétaire pour 5000F</div>
+<p id="clientMsg"></p>
+</div>
+
+<!-- ONGLET CAISSE -->
+<div id="caisse" class="hidden">
+<h3>Vente</h3>
+<p id="statusLicence">⚠️ Licence non activée</p>
+<input type="text" id="prodName" placeholder="Nom produit">
+<input type="number" id="prodPrix" placeholder="Prix FCFA">
+<button onclick="vendre()">Valider Vente</button>
+<div id="ventes"></div>
 </div>
 
 </div>
-</div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
+<script>
+// CONFIG FIREBASE - Même que admin.html
 const firebaseConfig = {
-apiKey: "AIzaSyCBYnjsBMJGeR57Kk3FX9zeIplE5EFkcIY",
-authDomain: "gmb24-raa.firebaseapp.com",
-databaseURL: "https://gmb24-raa-default-rtdb.europe-west1.firebasedatabase.app",
-projectId: "gmb24-raa",
-storageBucket: "gmb24-raa.firebasestorage.app",
-messagingSenderId: "558507911211",
-appId: "1:558507911211:web:5cdc99c082fe653684626e",
-measurementId: "G-KVHFHTJVFN"
+  apiKey: "VOTRE_API_KEY",
+  authDomain: "gmb24-raa.firebaseapp.com",
+  projectId: "gmb24-raa",
+  storageBucket: "gmb24-raa.appspot.com",
+  messagingSenderId: "VOTRE_SENDER_ID",
+  appId: "VOTRE_APP_ID"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
 let confirmationResult;
-let userPhone = "";
-let deferredPrompt;
+let userPhone;
+let currentUser = null;
 
-// PWA INSTALL
-window.addEventListener('beforeinstallprompt', (e) => {
-e.preventDefault();
-deferredPrompt = e;
-document.getElementById('installBtn').style.display = 'block';
-});
-
-window.installerPWA = async function() {
-if(deferredPrompt) {
-deferredPrompt.prompt();
-await deferredPrompt.userChoice;
-deferredPrompt = null;
-document.getElementById('installBtn').style.display = 'none';
+// Tabs
+function showTab(tab){
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#client, #caisse').forEach(d => d.classList.add('hidden'));
+  event.target.classList.add('active');
+  document.getElementById(tab).classList.remove('hidden');
+  
+  if(tab === 'caisse' && currentUser){
+    checkLicence();
+  }
 }
+
+// Init reCAPTCHA
+window.onload = () => {
+  window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+    'size': 'normal',
+    'callback': () => document.getElementById('btnSend').disabled = false
+  });
+  recaptchaVerifier.render();
 };
 
-// SERVICE WORKER
-if('serviceWorker' in navigator) {
-navigator.serviceWorker.register('sw.js');
+// Envoi SMS OTP
+async function sendOTP(){
+  const phone = document.getElementById('phone').value;
+  if(!phone.startsWith('+228') || phone.length < 13){
+    alert("Format: +228XXXXXXXX");
+    return;
+  }
+  
+  document.getElementById('btnSend').disabled = true;
+  document.getElementById('clientMsg').innerText = "Envoi SMS...";
+  
+  try{
+    confirmationResult = await auth.signInWithPhoneNumber(phone, window.recaptchaVerifier);
+    userPhone = phone;
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.remove('hidden');
+    document.getElementById('clientMsg').innerText = "✅ SMS envoyé. Entre le code";
+    document.getElementById('clientMsg').style.color = "green";
+  } catch(e){
+    document.getElementById('clientMsg').innerText = "❌ Erreur: " + e.message;
+    document.getElementById('clientMsg').style.color = "red";
+    document.getElementById('btnSend').disabled = false;
+  }
 }
 
-// TABS
-window.showTab = function(tab) {
-document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-event.target.classList.add('active');
-document.getElementById(tab).classList.add('active');
+// Vérifier code SMS
+async function verifyOTP(){
+  const code = document.getElementById('otp').value;
+  try{
+    const result = await confirmationResult.confirm(code);
+    currentUser = result.user;
+    document.getElementById('clientMsg').innerText = "✅ Téléphone vérifié";
+    document.getElementById('clientMsg').style.color = "green";
+  } catch(e){
+    document.getElementById('clientMsg').innerText = "❌ Code SMS incorrect";
+    document.getElementById('clientMsg').style.color = "red";
+  }
 }
 
-// PROPRIETAIRE LOGIN
-window.loginOwner = async function() {
-const email = document.getElementById('emailOwner').value.trim();
-const password = document.getElementById('passwordOwner').value;
-const errorDiv = document.getElementById('errorOwner');
-errorDiv.style.display = 'none';
-
-try {
-await signInWithEmailAndPassword(auth, email, password);
-window.location.href = './dashboard.html';
-} catch(err) {
-errorDiv.innerText = 'Email ou mot de passe incorrect';
-errorDiv.style.display = 'block';
-}
-}
-
-// CLIENT : RECAPTCHA
-window.onload = function() {
-window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-size: 'normal',
-callback: () => {}
-});
-}
-
-// CLIENT : ENVOYER SMS
-window.sendOTP = async function() {
-let phone = document.getElementById('phoneClient').value.trim();
-const errorDiv = document.getElementById('errorClient');
-errorDiv.style.display = 'none';
-
-if(!phone.startsWith('+228')) phone = '+228' + phone.replace(/\D/g,'');
-userPhone = phone;
-
-try {
-confirmationResult = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier);
-document.getElementById('etapePhone').classList.add('hidden');
-document.getElementById('etapeOTP').classList.remove('hidden');
-} catch(err) {
-errorDiv.innerText = 'Erreur SMS. Vérifie le numéro + format international';
-errorDiv.style.display = 'block';
-}
-}
-
-window.backToPhone = function() {
-document.getElementById('etapeOTP').classList.add('hidden');
-document.getElementById('etapeLicence').classList.add('hidden');
-document.getElementById('etapePhone').classList.remove('hidden');
-}
-
-// CLIENT : VERIFIER OTP + CHECK LICENCE
-window.verifyOTP = async function() {
-const code = document.getElementById('codeOTP').value.trim();
-const errorDiv = document.getElementById('errorOTP');
-errorDiv.style.display = 'none';
-
-try {
-await confirmationResult.confirm(code);
-const docRef = doc(db, "licences", userPhone);
-const docSnap = await getDoc(docRef);
-
-if(docSnap.exists()) {
-const data = docSnap.data();
-const dateExpire = new Date(data.dateExpire);
-const now = new Date();
-
-if(dateExpire > now) {
-localStorage.setItem('userPhone', userPhone);
-window.location.href = './dashboard.html';
-} else {
-document.getElementById('etapeOTP').classList.add('hidden');
-document.getElementById('etapeLicence').classList.remove('hidden');
-}
-} else {
-const dateExpire = new Date();
-dateExpire.setDate(dateExpire.getDate() + 30);
-await setDoc(docRef, {
-phone: userPhone,
-dateCreation: new Date().toISOString(),
-dateExpire: dateExpire.toISOString(),
-actif: true
-});
-localStorage.setItem('userPhone', userPhone);
-window.location.href = './dashboard.html';
+// Activer licence avec code GMB
+async function activateLicense(){
+  const code = document.getElementById('licenseCode').value;
+  const msg = document.getElementById('clientMsg');
+  
+  if(!currentUser){
+    msg.innerText = "❌ Vérifie d'abord ton SMS";
+    msg.style.color = "red";
+    return;
+  }
+  
+  try{
+    const doc = await db.collection('codesLicence').doc(code).get();
+    if(!doc.exists || doc.data().used){
+      msg.innerText = "❌ Code invalide ou déjà utilisé";
+      msg.style.color = "red";
+      return;
+    }
+    
+    const data = doc.data();
+    if(data.phone !== userPhone){
+      msg.innerText = "❌ Ce code n'est pas pour ce numéro";
+      msg.style.color = "red";
+      return;
+    }
+    
+    // Marquer code utilisé + créer licence 30 jours
+    const expireDate = new Date();
+    expireDate.setDate(expireDate.getDate() + 30);
+    
+    await db.collection('licences').doc(userPhone).set({
+      phone: userPhone,
+      code: code,
+      activatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      expireAt: expireDate
+    });
+    
+    await db.collection('codesLicence').doc(code).update({used: true});
+    
+    msg.innerText = `✅ Licence activée jusqu'au ${expireDate.toLocaleDateString()}`;
+    msg.style.color = "green";
+    localStorage.setItem('gmb24_phone', userPhone);
+    
+  } catch(e){
+    msg.innerText = "❌ Erreur: " + e.message;
+    msg.style.color = "red";
+  }
 }
 
-} catch(err) {
-errorDiv.innerText = 'Code SMS incorrect';
-errorDiv.style.display = 'block';
-}
-}
-
-// CLIENT : ACTIVER LICENCE AVEC CODE
-window.activerLicence = async function() {
-const code = document.getElementById('codeLicence').value.trim().toUpperCase();
-const errorDiv = document.getElementById('errorLicence');
-const successDiv = document.getElementById('successLicence');
-errorDiv.style.display = 'none';
-successDiv.style.display = 'none';
-
-const docRef = doc(db, "codesLicence", code);
-const docSnap = await getDoc(docRef);
-
-if(!docSnap.exists()) {
-errorDiv.innerText = 'Code invalide';
-errorDiv.style.display = 'block';
-return;
+// Vérifier licence pour caisse
+async function checkLicence(){
+  const phone = localStorage.getItem('gmb24_phone');
+  if(!phone) return;
+  
+  const doc = await db.collection('licences').doc(phone).get();
+  const status = document.getElementById('statusLicence');
+  
+  if(doc.exists && doc.data().expireAt.toDate() > new Date()){
+    status.innerText = "✅ Licence active jusqu'au " + doc.data().expireAt.toDate().toLocaleDateString();
+    status.style.color = "green";
+  } else {
+    status.innerText = "⚠️ Licence expirée. Active avec un code GMB";
+    status.style.color = "red";
+  }
 }
 
-const data = docSnap.data();
-if(data.utilise) {
-errorDiv.innerText = 'Code déjà utilisé';
-errorDiv.style.display = 'block';
-return;
-}
-
-const dateExpire = new Date();
-dateExpire.setDate(dateExpire.getDate() + 30);
-await setDoc(doc(db, "licences", userPhone), {
-phone: userPhone,
-dateExpire: dateExpire.toISOString(),
-actif: true,
-codeUtilise: code
-});
-
-await setDoc(docRef, {utilise: true}, {merge: true});
-
-successDiv.innerText = 'Licence activée ! Redirection...';
-successDiv.style.display = 'block';
-
-setTimeout(() => {
-localStorage.setItem('userPhone', userPhone);
-window.location.href = './dashboard.html';
-}, 1500);
+// Vente simple
+async function vendre(){
+  const phone = localStorage.getItem('gmb24_phone');
+  const nom = document.getElementById('prodName').value;
+  const prix = parseInt(document.getElementById('prodPrix').value);
+  
+  if(!phone) return alert("Active ta licence d'abord");
+  
+  await db.collection('ventes').add({
+    phone: phone,
+    produit: nom,
+    prix: prix,
+    date: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  
+  alert("✅ Vente enregistrée: " + nom + " - " + prix + " FCFA");
+  document.getElementById('prodName').value = "";
+  document.getElementById('prodPrix').value = "";
 }
 </script>
 </body>
-  </html>
+</html>
