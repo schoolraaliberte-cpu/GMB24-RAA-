@@ -4,25 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GMB24-RAA - Admin</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2563eb">
 <style>
 *{box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial; background:#f8fafc; margin:0; padding:20px}
-.header{display:flex; justify-content:space-between; align-items:center; margin-bottom:30px}
-h1{color:#1e293b; margin:0}
+.header{display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; flex-wrap:wrap; gap:10px}
+h1{color:#1e293b; margin:0; font-size:22px}
 .btn-logout{padding:10px 20px; background:#dc2626; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600}
 .btn-logout:hover{background:#b91c1c}
-.card{background:white; padding:20px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:20px}
+.card{background:white; padding:20px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:20px; overflow-x:auto}
 .card h2{margin-top:0; color:#334155; font-size:18px}
-table{width:100%; border-collapse:collapse}
+table{width:100%; border-collapse:collapse; min-width:600px}
 th{text-align:left; padding:12px; background:#f1f5f9; color:#475569; font-size:13px; text-transform:uppercase}
 td{padding:12px; border-bottom:1px solid #e2e8f0}
 .expired{color:#dc2626; font-weight:600}
-.btn{padding:8px 14px; background:#2563eb; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px; margin-right:6px}
+.btn{padding:8px 14px; background:#2563eb; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px}
 .btn:hover{background:#1d4ed8}
-.btn-whatsapp{background:#16a34a}
-.btn-whatsapp:hover{background:#15803d}
 .code{display:inline-block; padding:4px 8px; background:#fef3c7; border-radius:4px; font-family:monospace; font-weight:600}
 .info{font-size:13px; color:#64748b; margin-top:10px}
+.loading{text-align:center; color:#94a3b8; padding:20px}
 </style>
 </head>
 <body>
@@ -45,7 +46,7 @@ td{padding:12px; border-bottom:1px solid #e2e8f0}
       </tr>
     </thead>
     <tbody id="tbodyClients">
-      <tr><td colspan="5" style="text-align:center; color:#94a3b8">Chargement...</td></tr>
+      <tr><td colspan="5" class="loading">Chargement...</td></tr>
     </tbody>
   </table>
   <p class="info">Seuls les clients avec abonnement expiré s’affichent ici</p>
@@ -58,7 +59,10 @@ import { auth, db } from "./firebaseConfig.js";
 
 const tbody = document.getElementById("tbodyClients");
 
-// PROTÉGER PAGE ADMIN
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+
 onAuthStateChanged(auth, async (user) => {
   if(!user) {
     window.location.href = "index.html";
@@ -67,77 +71,66 @@ onAuthStateChanged(auth, async (user) => {
   await chargerClientsExpires();
 });
 
-// 1. CHARGER CLIENTS EXPIRÉS
 async function chargerClientsExpires() {
-  const now = new Date();
-  const q = query(collection(db, "licences"), where("expireAt", "<=", now));
-  const snap = await getDocs(q);
-  
-  if(snap.empty) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#16a34a">Aucun client à renouveler ✓</td></tr>';
-    return;
+  try {
+    const now = new Date();
+    const q = query(collection(db, "licences"), where("expireAt", "<=", now));
+    const snap = await getDocs(q);
+    if(snap.empty) {
+      tbody.innerHTML = '<tr><td colspan="5" class="loading" style="color:#16a34a">Aucun client à renouveler ✓</td></tr>';
+      return;
+    }
+    tbody.innerHTML = "";
+    snap.forEach(docSnap => {
+      const data = docSnap.data();
+      const clientId = docSnap.id;
+      const expireDate = data.expireAt.toDate().toLocaleDateString("fr-FR");
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${data.email}</td>
+        <td><span class="expired">${data.statut}</span></td>
+        <td>${expireDate}</td>
+        <td>${data.codeLicence? `<span class="code">${data.codeLicence}</span>` : '-'}</td>
+        <td>
+          <button class="btn" onclick="genererCode('${clientId}', '${data.email}')">Générer GMBXXXX</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="5" class="loading" style="color:#dc2626">Erreur: ${e.message}</td></tr>`;
   }
-  
-  tbody.innerHTML = "";
-  snap.forEach(docSnap => {
-    const data = docSnap.data();
-    const clientId = docSnap.id;
-    const expireDate = data.expireAt.toDate().toLocaleDateString("fr-FR");
-    
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${data.email}</td>
-      <td><span class="expired">${data.statut}</span></td>
-      <td>${expireDate}</td>
-      <td>${data.codeLicence ? `<span class="code">${data.codeLicence}</span>` : '-'}</td>
-      <td>
-        <button class="btn" onclick="genererCode('${clientId}', '${data.email}')">Générer GMBXXXX</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
 }
 
-// 2. GÉNÉRER CODE GMBXXXX + WHATSAPP
 window.genererCode = async (clientId, email) => {
-  // Génère GMB + 4 caractères alphanum
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let code = "GMB";
   for(let i=0; i<4; i++) {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
-  
   const newExpire = new Date();
   newExpire.setDate(newExpire.getDate() + 30);
-  
-  // 1. Créer le code dans codesLicence
   await setDoc(doc(db, "codesLicence", code), {
     clientId: clientId,
     used: false,
     expireAt: newExpire,
     createdAt: serverTimestamp()
   });
-  
-  // 2. Mettre à jour licence client
   await updateDoc(doc(db, "licences", clientId), {
     codeLicence: code,
     statut: "actif",
     expireAt: newExpire
   });
-  
-  // 3. OUVRIR WHATSAPP AUTO
   const phone = prompt("Entre le numéro WhatsApp du client avec +228 :", "+228");
-  if(phone) {
-    const message = `Bonjour ! Votre code d'activation GMB24-RAA : ${code}\n\nValable 30 jours.\nEntrez-le dans l'app pour débloquer.`;
+  if(phone && phone.length > 8) {
+    const message = `Bonjour! Votre code d'activation GMB24-RAA : ${code}\n\nValable 30 jours.\nEntrez-le dans l'app pour débloquer.`;
     const url = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   }
-  
-  alert(`Code ${code} généré et envoyé !`);
+  alert(`Code ${code} généré et envoyé!`);
   chargerClientsExpires();
 };
 
-// DÉCONNEXION
 document.getElementById("btnLogout").onclick = async () => {
   await signOut(auth);
   window.location.href = "index.html";
