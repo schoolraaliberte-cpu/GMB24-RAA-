@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GMB24-RAA</title>
+<meta name="theme-color" content="#2563eb">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+*{box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial; background:#f8fafc; margin:0; padding:0}
+.hidden{display:none}
+.header{background:#2563eb; color:white; padding:15px; text-align:center; position:sticky; top:0; z-index:10}
+.header h1{margin:0; font-size:20px}
+.tabs{display:flex; background:white; border-bottom:2px solid #e2e8f0; overflow-x:auto}
+.tab{flex:1; min-width:140px; padding:14px; text-align:center; cursor:pointer; font-weight:600; color:#64748b; font-size:13px}
+.tab.active{background:#2563eb; color:white}
+.content{padding:20px; max-width:1000px; margin:0 auto}
+.card{background:white; padding:20px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:20px}
+.card h2{margin-top:0; color:#1e293b; font-size:18px; border-bottom:2px solid #2563eb; padding-bottom:8px}
+label{display:block; margin-bottom:5px; font-weight:600; color:#475569; font-size:14px}
+input, select{width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:8px; font-size:15px; margin-bottom:10px}
+.btn{width:100%; padding:14px; background:#2563eb; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:15px; margin-top:10px}
+.btn-whatsapp{background:#25D366}
+table{width:100%; border-collapse:collapse; margin-top:10px; font-size:10px}
+th, td{border:1px solid #e2e8f0; padding:5px; text-align:center; white-space:nowrap}
+th{background:#f1f5f9; font-size:9px}
+.box-block{background:white; padding:30px; border-radius:14px; margin:50px auto; max-width:380px; text-align:center}
+.paiement{background:#fef3c7; padding:18px; border-radius:10px; margin:20px 0}
+.numero{font-size:24px; font-weight:bold; color:#b45309}
+.calc-box{background:#f0f9ff; border:2px solid #2563eb; border-radius:10px; padding:15px; margin-top:15px}
+.calc-row{display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #dbeafe; font-size:14px}
+.calc-row:last-child{border-bottom:none; font-weight:bold; font-size:16px; color:#1e40af}
+.table-scroll{overflow-x:auto}
+.vert{color:#16a34a}
+.rouge{color:#dc2626}
+.grid-2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+</style>
+</head>
+<body>
+
+<!-- ÉCRAN BLOCAGE ESSAI 30J -->
+<div id="lockedScreen" class="hidden">
+  <div class="box-block">
+    <h2>GMB24-RAA</h2>
+    <h3>ESSAI GRATUIT TERMINÉ</h3>
+    <p>Renouvelle pour 2000 FCFA/mois</p>
+    <div class="paiement">
+      <b>Mobile Money:</b>
+      <div class="numero">Moov: +22896766875</div>
+      <div class="numero">TMoney: +22870346852</div>
+    </div>
+    <button class="btn" onclick="alert('WhatsApp +22896766875 pour code GMBXXXX')">Obtenir code d\'abonnement</button>
+  </div>
+</div>
+
+<!-- APP PRINCIPALE -->
+<div id="appScreen" class="hidden">
+  <div class="header">
+    <h1>GMB24-RAA</h1>
+    <div id="compteurJours" style="font-size:12px"></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(1)">Vente du jour</div>
+    <div class="tab" onclick="switchTab(2)">Paramètres</div>
+    <div class="tab" onclick="switchTab(3)">Historique</div>
+  </div>
+
+  <!-- FACE 1 VENTE -->
+  <div id="face1" class="content">
+    <div class="card">
+      <h2>Vente du jour : <span id="dateToday"></span></h2>
+      <input type="text" id="article" placeholder="Article">
+      <div class="grid-2">
+        <input type="number" id="montantTTC" placeholder="TTC" oninput="calcHT()">
+        <input type="number" id="quantite" placeholder="Qté" value="1" min="1" oninput="calculerAuto()">
+      </div>
+      <div class="grid-2">
+        <input type="date" id="dateVente" onchange="calculerAuto()">
+        <input type="number" id="montantHT" placeholder="HT" readonly>
+      </div>
+
+      <div class="calc-box">
+        <div class="calc-row"><span>TVA Collectée 18%:</span><span class="vert" id="tvaCollectee">0 FCFA</span></div>
+        <div class="calc-row"><span>TVA Déductible:</span><span class="vert" id="tvaDeductible">0 FCFA</span></div>
+        <div class="calc-row"><span>TVA à reverser OTR:</span><span class="rouge" id="tvaReverser">0 FCFA</span></div>
+        <div class="calc-row"><span>BÉNÉFICE NET:</span><span id="benefNet">0 FCFA</span></div>
+      </div>
+      <button class="btn" onclick="enregistrerVente()">+ Enregistrer vente</button>
+    </div>
+
+    <div class="card">
+      <h2>Tableau inventaire + TVA</h2>
+      <div class="table-scroll">
+        <table id="tableVentes">
+          <tr><th>Article</th><th>Qté</th><th>TTC</th><th>HT</th><th>TVA Coll.</th><th>TVA Déduct.</th><th>TVA Rev.</th><th>Impôt</th><th>Bénéfice</th></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- FACE 2 PARAMÈTRES AVEC RÉGIME LIBRE -->
+  <div id="face2" class="content" style="display:none">
+    <div class="card">
+      <h2>Paramètres Boutique</h2>
+      <input type="text" id="nomBoutique" placeholder="Nom boutique">
+      <input type="text" id="nomGerant" placeholder="Nom gérant">
+
+      <div class="grid-2">
+        <div>
+          <label>Régime Fiscal OTR</label>
+          <input type="text" id="regimeFiscal" placeholder="Tape: RAA ou REEL" value="RAA" oninput="calculerAuto()">
+        </div>
+        <div>
+          <label>Taux imposable %</label>
+          <input type="number" id="tauxImpo" placeholder="Tape: 5 ou 25" value="5" step="0.1" oninput="calculerAuto()">
+          <small style="color:#64748b">RAA=5% | REEL=25%</small>
+        </div>
+      </div>
+
+      <input type="number" id="depImpoHT" placeholder="Dépenses HT" oninput="calculerAuto()">
+      <input type="number" id="depNonImpo" placeholder="Dépenses non impo" oninput="calculerAuto()">
+      <input type="text" id="numBoutiquier" placeholder="Ton téléphone">
+      <button class="btn" onclick="sauverParams()">Sauvegarder paramètres</button>
+      <button class="btn btn-whatsapp" onclick="window.open('https://wa.me/22896766875')">WhatsApp Support</button>
+    </div>
+  </div>
+
+  <!-- FACE 3 HISTORIQUE -->
+  <div id="face3" class="content" style="display:none">
+    <div class="card">
+      <h2>Ventes mois passés</h2>
+      <div class="grid-2">
+        <select id="moisSelect" onchange="chargerMois()"></select>
+        <select id="anneeSelect" onchange="chargerMois()"></select>
+      </div>
+      <div class="table-scroll">
+        <table id="tableMois"><tr><th>Date</th><th>Article</th><th>TTC</th><th>TVA Rev.</th></tr></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// INIT
+document.getElementById('dateVente').value = new Date().toISOString().split('T')[0];
+document.getElementById('dateToday').innerText = new Date().toLocaleDateString('fr-FR');
+
+// CHECK ESSAI 30J
+function checkEssai() {
+  let dateInstall = localStorage.getItem('date_install_gmb24');
+  if(!dateInstall) {
+    localStorage.setItem('date_install_gmb24', new Date().toISOString());
+    dateInstall = new Date().toISOString();
+  }
+  const joursPasses = Math.floor((new Date() - new Date(dateInstall)) / 86400000);
+  const joursRestants = 30 - joursPasses;
+  if(joursPasses >= 30) {
+    document.getElementById('lockedScreen').classList.remove('hidden');
+  } else {
+    document.getElementById('compteurJours').innerText = `Essai: ${joursRestants}j restants`;
+    document.getElementById('appScreen').classList.remove('hidden');
+    remplirMois();
+    chargerParams();
+    calculerAuto();
+  }
+}
+checkEssai();
+
+function switchTab(n) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.content').forEach(c=>c.style.display='none');
+  document.querySelectorAll('.tab')[n-1].classList.add('active');
+  document.getElementById('face'+n).style.display='block';
+}
+
+function calcHT() {
+  const ttc = parseFloat(document.getElementById('montantTTC').value) || 0;
+  document.getElementById('montantHT').value = (ttc/1.18).toFixed(2);
+  calculerAuto();
+}
+
+// CALCULS AUTO AVEC RÉGIME LIBRE
+function calculerAuto() {
+  const date = document.getElementById('dateVente').value;
+  const ventes = JSON.parse(localStorage.getItem('ventes_'+date) || '[]');
+  const depImpoHT = parseFloat(document.getElementById('depImpoHT').value) || 0;
+  const depNonImpo = parseFloat(document.getElementById('depNonImpo').value) || 0;
+  const regime = document.getElementById('regimeFiscal').value.toUpperCase() || 'RAA';
+  const taux = parseFloat(document.getElementById('tauxImpo').value) || 5;
+
+  const totalTTC = ventes.reduce((s,v)=>s+v.ttc, 0);
+  const totalHT = totalTTC / 1.18;
+  const tvaCollectee = totalTTC - totalHT;
+  const tvaDeductible = depImpoHT * 0.18;
+  const tvaReverser = Math.max(0, tvaCollectee - tvaDeductible);
+
+  let benefBrut = totalHT - depImpoHT;
+  let impot = benefBrut * (taux/100);
+  const benefNet = benefBrut - impot - depNonImpo;
+
+  document.getElementById('tvaCollectee').innerText = tvaCollectee.toFixed(0)+' FCFA';
+  document.getElementById('tvaDeductible').innerText = tvaDeductible.toFixed(0)+' FCFA';
+  document.getElementById('tvaReverser').innerText = tvaReverser.toFixed(0)+' FCFA';
+  document.getElementById('benefNet').innerText = benefNet.toLocaleString()+' FCFA';
+
+  // TABLEAU AVEC RÉGIME AFFICHÉ
+  const table = document.getElementById('tableVentes');
+  table.innerHTML = `<tr><th>Article</th><th>Qté</th><th>TTC</th><th>HT</th><th>TVA Coll.</th><th>TVA Déduct.</th><th>TVA Rev.</th><th>Impôt ${regime} ${taux}%</th><th>Bénéfice</th></tr>`;
+
+  let benefCumul=0, tvaCollCumul=0, tvaDedCumul=0;
+  ventes.forEach(v=>{
+    const htLigne = v.ttc/1.18;
+    const tvaCollLigne = v.ttc - htLigne;
+    const partCA = totalTTC>0? v.ttc/totalTTC : 0;
+    const tvaDedLigne = tvaDeductible * partCA;
+    const tvaRevLigne = Math.max(0, tvaCollLigne - tvaDedLigne);
+    const impotLigne = impot * partCA;
+    const benefLigne = htLigne - (depImpoHT*partCA) - impotLigne - (depNonImpo*partCA);
+    benefCumul+=benefLigne; tvaCollCumul+=tvaCollLigne; tvaDedCumul+=tvaDedLigne;
+    table.innerHTML += `<tr><td>${v.article}</td><td>${v.qte}</td><td>${v.ttc}</td><td>${htLigne.toFixed(0)}</td><td class="vert">${tvaCollLigne.toFixed(0)}</td><td class="vert">${tvaDedLigne.toFixed(0)}</td><td class="rouge">${tvaRevLigne.toFixed(0)}</td><td class="rouge">${impotLigne.toFixed(0)}</td><td>${benefLigne.toFixed(0)}</td></tr>`;
+  });
+  if(ventes.length>0) {
+    table.innerHTML += `<tr style="background:#dbeafe; font-weight:bold"><td>TOTAL</td><td>${ventes.reduce((s,v)=>s+v.qte,0)}</td><td>${totalTTC}</td><td>${totalHT.toFixed(0)}</td><td class="vert">${tvaCollCumul.toFixed(0)}</td><td class="vert">${tvaDedCumul.toFixed(0)}</td><td class="rouge">${Math.max(0,tvaCollCumul-tvaDedCumul).toFixed(0)}</td><td class="rouge">${impot.toFixed(0)}</td><td>${benefCumul.toFixed(0)}</td></tr>`;
+  }
+}
+
+function enregistrerVente() {
+  const article = document.getElementById('article').value;
+  const ttc = parseFloat(document.getElementById('montantTTC').value) || 0;
+  const qte = parseInt(document.getElementById('quantite').value) || 1;
+  const date = document.getElementById('dateVente').value;
+  const ht = parseFloat(document.getElementById('montantHT').value) || 0;
+  if(!article || ttc==0) { alert('Remplis article et TTC'); return; }
+  let ventes = JSON.parse(localStorage.getItem('ventes_'+date) || '[]');
+  ventes.push({article, qte, ttc, ht, date});
+  localStorage.setItem('ventes_'+date, JSON.stringify(ventes));
+  document.getElementById('article').value='';
+  document.getElementById('montantTTC').value='';
+  document.getElementById('quantite').value='1';
+  document.getElementById('montantHT').value='';
+  calculerAuto();
+}
+
+function sauverParams() {
+  localStorage.setItem('params_boutique', JSON.stringify({
+    nom: document.getElementById('nomBoutique').value,
+    gerant: document.getElementById('nomGerant').value,
+    regime: document.getElementById('regimeFiscal').value,
+    taux: document.getElementById('tauxImpo').value,
+    tel: document.getElementById('numBoutiquier').value
+  }));
+  alert('Paramètres sauvegardés ✓');
+  calculerAuto();
+}
+
+function chargerParams() {
+  const p = JSON.parse(localStorage.getItem('params_boutique') || '{}');
+  document.getElementById('nomBoutique').value = p.nom || '';
+  document.getElementById('nomGerant').value = p.gerant || '';
+  document.getElementById('regimeFiscal').value = p.regime || 'RAA';
+  document.getElementById('tauxImpo').value = p.taux || '5';
+  document.getElementById('numBoutiquier').value = p.tel || '';
+}
+
+function remplirMois() {
+  const mois = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
+  mois.forEach((m,i)=>document.getElementById('moisSelect').innerHTML += `<option value="${i}">${m}</option>`);
+  for(let a=2024; a<=2026; a++) document.getElementById('anneeSelect').innerHTML += `<option value="${a}">${a}</option>`;
+  document.getElementById('moisSelect').value = new Date().getMonth();
+  document.getElementById('anneeSelect').value = new Date().getFullYear();
+}
+
+function chargerMois() {
+  const mois = document.getElementById('moisSelect').value.padStart(2,'0');
+  const annee = document.getElementById('anneeSelect').value;
+  const table = document.getElementById('tableMois');
+  table.innerHTML = '<tr><th>Date</th><th>Article</th><th>TTC</th><th>TVA Rev.</th></tr>';
+  for(let j=1; j<=31; j++) {
+    const jour = j.toString().padStart(2,'0');
+    const ventes = JSON.parse(localStorage.getItem('ventes_'+`${annee}-${mois}-${jour}`) || '[]');
+    ventes.forEach(v=>{
+      const tvaRev = (v.ttc - v.ttc/1.18);
+      table.innerHTML += `<tr><td>${jour}/${mois}</td><td>${v.article}</td><td>${v.ttc}</td><td class="rouge">${tvaRev.toFixed(0)}</td></tr>`;
+    });
+  }
+}
+</script>
+</body>
+  </html>
