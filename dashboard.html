@@ -3,192 +3,479 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GMB24-RAA - Vente du jour</title>
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#2563eb">
+<title>GMB24-RAA Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *{box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial; background:#f8fafc; margin:0; padding:20px}
-.hidden{display:none}
-.header{display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; flex-wrap:wrap; gap:10px}
-h1{color:#1e293b; margin:0; font-size:22px}
-.btn-logout{padding:10px 18px; background:#dc2626; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600}
-.card{background:white; padding:25px; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,0.06); max-width:500px; margin:0 auto}
-.card h2{margin-top:0; color:#334155; font-size:18px; margin-bottom:20px}
-.form-group{margin-bottom:18px}
-label{display:block; margin-bottom:6px; font-weight:600; color:#475569; font-size:14px}
-input{width:100%; padding:14px; border:1px solid #cbd5e1; border-radius:8px; font-size:16px; outline:none}
-input:focus{border-color:#2563eb}
-.btn-save{width:100%; padding:15px; background:#2563eb; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:16px; margin-top:10px}
-.btn-save:hover{background:#1d4ed8}
-.btn-save:disabled{background:#94a3b8}
-.success{background:#d1fae5; color:#065f46; padding:12px; border-radius:8px; margin-bottom:15px; display:none}
-.info{font-size:13px; color:#64748b; text-align:center; margin-top:15px}
-.date-today{color:#2563eb; font-weight:600}
-.compteur{font-size:13px; color:#2563eb; font-weight:600}
-
-/* Style écran blocage */
-.box-block{background:white; padding:35px; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,0.08); width:100%; max-width:380px; margin:100px auto; text-align:center}
-.box-block h2{color:#dc2626; font-size:22px; margin:0 0 15px 0}
-.paiement{background:#fef3c7; padding:20px; border-radius:10px; margin:20px 0; border-left:4px solid #f59e0b; text-align:center}
-.numero{font-size:26px; font-weight:bold; letter-spacing:1px; color:#b45309; margin:8px 0}
-.btn-moov{width:100%; padding:15px; background:#FF6B00; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:16px; margin-top:10px}
-.btn-moov:hover{background:#e55f00}
-.btn-call{width:100%; padding:15px; background:#16a34a; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:16px; margin-top:8px}
-.btn-call:hover{background:#15803d}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial; background:#f8fafc; margin:0; padding:0}
+.header{background:#2563eb; color:white; padding:15px; text-align:center; position:sticky; top:0; z-index:10}
+.header h1{margin:0; font-size:20px}
+.tabs{display:flex; background:white; border-bottom:2px solid #e2e8f0; overflow-x:auto}
+.tab{flex:1; min-width:140px; padding:14px; text-align:center; cursor:pointer; font-weight:600; color:#64748b; font-size:13px}
+.tab.active{background:#2563eb; color:white}
+.content{padding:20px; max-width:1000px; margin:0 auto}
+.card{background:white; padding:20px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:20px}
+.card h2{margin-top:0; color:#1e293b; font-size:18px; border-bottom:2px solid #2563eb; padding-bottom:8px}
+.form-group{margin-bottom:15px}
+label{display:block; margin-bottom:5px; font-weight:600; color:#475569; font-size:14px}
+input, select{width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:8px; font-size:15px}
+.btn{width:100%; padding:14px; background:#2563eb; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:15px; margin-top:10px}
+.btn-green{background:#16a34a}
+.btn-camera{background:#7c3aed}
+table{width:100%; border-collapse:collapse; margin-top:10px; font-size:10px}
+th, td{border:1px solid #e2e8f0; padding:5px; text-align:center; white-space:nowrap}
+th{background:#f1f5f9; font-size:9px}
+.success{background:#d1fae5; color:#065f46; padding:10px; border-radius:6px; margin:10px 0; display:none}
+.calc-box{background:#f0f9ff; border:2px solid #2563eb; border-radius:10px; padding:15px; margin-top:15px}
+.calc-row{display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #dbeafe; font-size:14px}
+.calc-row:last-child{border-bottom:none; font-weight:bold; font-size:16px; color:#1e40af}
+#cameraPreview{width:100%; max-height:250px; border-radius:8px; margin-top:10px; display:none; border:2px solid #2563eb}
+.grid-2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.table-scroll{overflow-x:auto}
+.vert{color:#16a34a}
+.rouge{color:#dc2626}
 </style>
 </head>
 <body>
 
-<!-- 1. ÉCRAN APP - VENTE DU JOUR -->
-<div id="appScreen" class="hidden">
-  <div class="header">
-    <div>
-      <h1>GMB24-RAA</h1>
-      <div class="compteur" id="compteurJours"></div>
+<div class="header">
+  <h1>GMB24-RAA</h1>
+  <p style="margin:5px 0 0 0; font-size:12px">Support: +22896766875</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab(1)">I/ Vente du jour</div>
+  <div class="tab" onclick="switchTab(2)">II/ Paramètres</div>
+  <div class="tab" onclick="switchTab(3)">III/ Historique</div>
+</div>
+
+<!-- FACE 1 : VENTE + TABLEAU TVA -->
+<div id="face1" class="content">
+  <div class="card">
+    <h2>Vente du jour : <span id="dateToday"></span></h2>
+    <div class="success" id="msgSuccess"></div>
+
+    <div class="form-group">
+      <label>Article</label>
+      <input type="text" id="article" placeholder="Nom de l'article">
+      <button class="btn btn-camera" onclick="ouvrirCamera()">📷 Caméra</button>
+      <video id="cameraPreview" autoplay playsinline></video>
+      <canvas id="canvasCapture" style="display:none"></canvas>
     </div>
-    <button class="btn-logout" id="btnLogout">Réinitialiser essai</button>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Montant TTC</label>
+        <input type="number" id="montantTTC" placeholder="0" min="0" oninput="calculerAuto()">
+      </div>
+      <div class="form-group">
+        <label>Quantité</label>
+        <input type="number" id="quantite" placeholder="1" min="1" value="1" oninput="calculerAuto()">
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="dateVente" onchange="chargerVentes(); calculerAuto()">
+      </div>
+      <div class="form-group">
+        <label>Montant HT</label>
+        <input type="number" id="montantHT" readonly>
+      </div>
+    </div>
+
+    <!-- RÉCAP TVA AUTO -->
+    <div class="calc-box">
+      <div class="calc-row">
+        <span>TVA Collectée 18%:</span>
+        <span class="vert" id="tvaCollectee">0 FCFA</span>
+      </div>
+      <div class="calc-row">
+        <span>TVA Déductible sur dépenses:</span>
+        <span class="vert" id="tvaDeductible">0 FCFA</span>
+      </div>
+      <div class="calc-row">
+        <span>TVA à reverser OTR:</span>
+        <span class="rouge" id="tvaAReverser">0 FCFA</span>
+      </div>
+      <div class="calc-row">
+        <span>BÉNÉFICE NET JOUR:</span>
+        <span id="benefNet">0 FCFA</span>
+      </div>
+    </div>
+
+    <button class="btn" onclick="enregistrerVente()">+ Enregistrer la vente</button>
   </div>
 
   <div class="card">
-    <h2>Vente du jour : <span class="date-today" id="dateToday"></span></h2>
-    <div class="success" id="msgSuccess">Vente enregistrée ✓</div>
-    <div class="form-group">
-      <label>Montant ventes TGO</label>
-      <input type="number" id="venteTGO" placeholder="0" min="0" inputmode="numeric">
+    <h2>Tableau d'inventaire - TVA Collectée + Déductible</h2>
+    <div class="table-scroll">
+      <table id="tableVentes">
+        <tr>
+          <th>Article</th>
+          <th>Qté</th>
+          <th>TTC</th>
+          <th>HT</th>
+          <th>TVA Coll. 18%</th>
+          <th>TVA Déduct.</th>
+          <th>TVA à reverser</th>
+          <th>Impôt</th>
+          <th>Bénéfice</th>
+          <th>Heure</th>
+        </tr>
+      </table>
     </div>
-    <div class="form-group">
-      <label>Montant ventes YAS</label>
-      <input type="number" id="venteYAS" placeholder="0" min="0" inputmode="numeric">
-    </div>
-    <div class="form-group">
-      <label>Nombre de transactions</label>
-      <input type="number" id="nbTransactions" placeholder="0" min="0" inputmode="numeric">
-    </div>
-    <div class="form-group">
-      <label>Commentaire</label>
-      <input type="text" id="commentaire" placeholder="Optionnel" maxlength="200">
-    </div>
-    <button class="btn-save" id="btnSave">Enregistrer la vente</button>
-    <p class="info">Une seule saisie par jour. Modifiable jusqu’à 23h59</p>
+    <button class="btn btn-green" onclick="telechargerPDFMois()">📄 Fiche clôture PDF</button>
+  </div>
+
+  <div class="card">
+    <h2>Liste des boutiquiers</h2>
+    <table id="tableBoutiquiers">
+      <tr><th>Nom Gérant</th><th>Nom Boutique</th><th>Téléphone</th><th>Date</th></tr>
+    </table>
   </div>
 </div>
 
-<!-- 2. ÉCRAN BLOCAGE - ABONNEMENT -->
-<div id="lockedScreen" class="hidden">
-  <div class="box-block">
-    <h2>ESSAI GRATUIT TERMINÉ</h2>
-    <p style="color:#64748b">Renouvelle pour continuer l’accès</p>
-    <div class="paiement">
-      <b>Paiement Mobile Money 2000 FCFA/mois :</b>
-      <div class="numero">Moov: +22896766875</div>
-      <div class="numero">TMoney: +22870346852</div>
+<!-- FACE 2 : PARAMÈTRES -->
+<div id="face2" class="content" style="display:none">
+  <div class="card">
+    <h2>Paramètres Boutique</h2>
+    <div class="form-group">
+      <label>Nom de la boutique</label>
+      <input type="text" id="nomBoutique">
     </div>
-    <button class="btn-moov" onclick="copierNumero('+22896766875')">Copier numéro Moov</button>
-    <button class="btn-call" onclick="window.location.href='tel:+22870346852'">Appeler 70346852 pour confirmer</button>
-    <p class="info">Après paiement, écris-nous sur WhatsApp pour débloquer</p>
+    <div class="form-group">
+      <label>Nom du gérant</label>
+      <input type="text" id="nomGerant">
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Régime Fiscal</label>
+        <select id="regimeFiscal" onchange="calculerAuto()">
+          <option value="RAA">RAA - 5%</option>
+          <option value="CMI">CMI - 2% CA</option>
+          <option value="REEL">REEL - 25% IS</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Taux imposable</label>
+        <select id="tauxImpo" onchange="calculerAuto()">
+          <option value="IS">IS</option>
+          <option value="IRPP">IRPP</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" onclick="sauverParams()">Sauvegarder</button>
+  </div>
+
+  <div class="card">
+    <h2>Dépenses du jour - TVA 18% déductible</h2>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Dépenses HT imposables</label>
+        <input type="number" id="depImpoHT" placeholder="0" oninput="calculerAuto()">
+        <small style="color:#64748b">Ex: Achat stock, loyer HT</small>
+      </div>
+      <div class="form-group">
+        <label>Dépenses non imposables</label>
+        <input type="number" id="depNonImpo" placeholder="0" oninput="calculerAuto()">
+      </div>
+    </div>
+    <div class="calc-row">
+      <span>TVA 18% récupérable:</span>
+      <span class="vert" id="tvaDepAff">0 FCFA</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Meta AI</h2>
+    <button class="btn" style="background:#25D366" onclick="window.open('https://wa.me/22896766875?text=Question%20GMB24-RAA', '_blank')">💬 Poser question</button>
+  </div>
+
+  <div class="card">
+    <h2>Abonnement</h2>
+    <input type="text" id="numBoutiquier" placeholder="N° téléphone">
+    <button class="btn" style="background:#FF6B00" onclick="genererCodeAbo()">Générer code après 1 mois</button>
+    <div id="codeAboGenere" class="code-box" style="display:none"></div>
+  </div>
+</div>
+
+<!-- FACE 3 : HISTORIQUE -->
+<div id="face3" class="content" style="display:none">
+  <div class="card">
+    <h2>Ventes mois passés</h2>
+    <div class="grid-2">
+      <select id="moisSelect" onchange="chargerMois()"></select>
+      <select id="anneeSelect" onchange="chargerMois()"></select>
+    </div>
+    <div class="table-scroll">
+      <table id="tableMois">
+        <tr><th>Date</th><th>Article</th><th>TTC</th><th>TVA Coll.</th><th>TVA Déduct.</th><th>TVA Reverser</th></tr>
+      </table>
+    </div>
   </div>
 </div>
 
 <script>
-const today = new Date().toISOString().split('T')[0];
-document.getElementById("dateToday").textContent = new Date().toLocaleDateString("fr-FR");
+document.getElementById('dateVente').value = new Date().toISOString().split('T')[0];
+document.getElementById('dateToday').innerText = new Date().toLocaleDateString('fr-FR');
+remplirMoisAnnee();
+chargerParams();
+chargerVentes();
+chargerListeBoutiquiers();
+calculerAuto();
 
-// 1. VÉRIFICATION ESSAI 30 JOURS
-function checkEssaiGratuit() {
-  const AUJOURDHUI = new Date();
-  let dateInstall = localStorage.getItem('date_install_gmb24');
+function switchTab(n) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.content').forEach(c=>c.style.display='none');
+  document.querySelectorAll('.tab')[n-1].classList.add('active');
+  document.getElementById('face'+n).style.display='block';
+}
 
-  if(!dateInstall) {
-    localStorage.setItem('date_install_gmb24', AUJOURDHUI.toISOString());
-    dateInstall = AUJOURDHUI.toISOString();
-  }
+// CALCUL HT
+document.getElementById('montantTTC').oninput = () => {
+  const ttc = parseFloat(document.getElementById('montantTTC').value) || 0;
+  const ht = ttc / 1.18;
+  document.getElementById('montantHT').value = ht.toFixed(2);
+  calculerAuto();
+};
 
-  const dateDebut = new Date(dateInstall);
-  const joursPasses = Math.floor((AUJOURDHUI - dateDebut) / (1000 * 60 * 60 * 24));
-  const joursRestants = 30 - joursPasses;
+// CALCULS AUTO AVEC TVA COLLECTÉE + DÉDUCTIBLE
+function calculerAuto() {
+  const date = document.getElementById('dateVente').value;
+  const ventes = JSON.parse(localStorage.getItem('ventes_'+date) || '[]');
+  const depImpoHT = parseFloat(document.getElementById('depImpoHT').value) || 0;
+  const depNonImpo = parseFloat(document.getElementById('depNonImpo').value) || 0;
+  const regime = document.getElementById('regimeFiscal').value;
 
-  if(joursPasses >= 30) {
-    document.getElementById('appScreen').classList.add('hidden');
-    document.getElementById('lockedScreen').classList.remove('hidden');
-    return false;
-  } else {
-    document.getElementById('compteurJours').innerText = `Essai: ${joursRestants} jour(s) restant(s)`;
-    document.getElementById('appScreen').classList.remove('hidden');
-    chargerVenteDuJour();
-    return true;
+  // 1. TVA COLLECTÉE = ventes TTC * 18/118
+  const totalTTC = ventes.reduce((s,v)=>s+v.ttc, 0);
+  const totalHT = totalTTC / 1.18;
+  const tvaCollectee = totalTTC - totalHT; // = TTC * 18/118
+
+  // 2. TVA DÉDUCTIBLE = dépenses HT * 18%
+  const tvaDeductible = depImpoHT * 0.18;
+
+  // 3. TVA À REVERSER OTR
+  const tvaAReverser = Math.max(0, tvaCollectee - tvaDeductible);
+
+  // 4. BÉNÉFICE
+  const benefBrut = totalHT - depImpoHT;
+  let impot = 0;
+  if(regime === 'RAA') impot = benefBrut * 0.05;
+  else if(regime === 'CMI') impot = totalTTC * 0.02;
+  else impot = benefBrut * 0.25;
+
+  const benefNet = benefBrut - impot - depNonImpo;
+
+  // AFFICHAGE RÉCAP
+  document.getElementById('tvaCollectee').innerText = tvaCollectee.toFixed(0) + ' FCFA';
+  document.getElementById('tvaDeductible').innerText = tvaDeductible.toFixed(0) + ' FCFA';
+  document.getElementById('tvaAReverser').innerText = tvaAReverser.toFixed(0) + ' FCFA';
+  document.getElementById('tvaDepAff').innerText = tvaDeductible.toFixed(0) + ' FCFA';
+  document.getElementById('benefNet').innerText = benefNet.toLocaleString() + ' FCFA';
+
+  // MISE À JOUR TABLEAU AVEC TVA
+  const table = document.getElementById('tableVentes');
+  table.innerHTML = '<tr><th>Article</th><th>Qté</th><th>TTC</th><th>HT</th><th>TVA Coll. 18%</th><th>TVA Déduct.</th><th>TVA Reverser</th><th>Impôt</th><th>Bénéfice</th><th>Heure</th></tr>';
+
+  let benefCumul = 0;
+  let tvaCollCumul = 0;
+  let tvaDedCumul = 0;
+
+  ventes.forEach((v) => {
+    const htLigne = v.ttc / 1.18;
+    const tvaCollLigne = v.ttc - htLigne; // TVA collectée ligne
+
+    // Répartition TVA déductible + impôt au prorata CA
+    const partCA = totalTTC > 0? v.ttc / totalTTC : 0;
+    const tvaDedLigne = tvaDeductible * partCA;
+    const tvaRevLigne = Math.max(0, tvaCollLigne - tvaDedLigne);
+    const impotLigne = impot * partCA;
+    const depImpoLigne = depImpoHT * partCA;
+    const depNonImpoLigne = depNonImpo * partCA;
+
+    const benefLigne = htLigne - depImpoLigne - impotLigne - depNonImpoLigne;
+    benefCumul += benefLigne;
+    tvaCollCumul += tvaCollLigne;
+    tvaDedCumul += tvaDedLigne;
+
+    table.innerHTML += `<tr>
+      <td>${v.article}</td>
+      <td>${v.qte}</td>
+      <td>${v.ttc.toLocaleString()}</td>
+      <td>${htLigne.toFixed(0)}</td>
+      <td class="vert">${tvaCollLigne.toFixed(0)}</td>
+      <td class="vert">${tvaDedLigne.toFixed(0)}</td>
+      <td class="rouge">${tvaRevLigne.toFixed(0)}</td>
+      <td class="rouge">${impotLigne.toFixed(0)}</td>
+      <td>${benefLigne.toFixed(0)}</td>
+      <td>${v.heure}</td>
+    </tr>`;
+  });
+
+  // Ligne TOTAL
+  if(ventes.length > 0) {
+    const tvaRevTotal = Math.max(0, tvaCollCumul - tvaDedCumul);
+    table.innerHTML += `<tr style="background:#dbeafe; font-weight:bold">
+      <td>TOTAL</td>
+      <td>${ventes.reduce((s,v)=>s+v.qte,0)}</td>
+      <td>${totalTTC.toLocaleString()}</td>
+      <td>${totalHT.toFixed(0)}</td>
+      <td class="vert">${tvaCollCumul.toFixed(0)}</td>
+      <td class="vert">${tvaDedCumul.toFixed(0)}</td>
+      <td class="rouge">${tvaRevTotal.toFixed(0)}</td>
+      <td class="rouge">${impot.toFixed(0)}</td>
+      <td>${benefCumul.toFixed(0)}</td>
+      <td>-</td>
+    </tr>`;
   }
 }
 
-// 2. SAUVEGARDE VENTE EN LOCAL
-function chargerVenteDuJour() {
-  const data = localStorage.getItem('vente_' + today);
-  if(data) {
-    const vente = JSON.parse(data);
-    document.getElementById("venteTGO").value = vente.venteTGO || 0;
-    document.getElementById("venteYAS").value = vente.venteYAS || 0;
-    document.getElementById("nbTransactions").value = vente.nbTransactions || 0;
-    document.getElementById("commentaire").value = vente.commentaire || "";
-    document.getElementById("msgSuccess").style.display = "block";
-    document.getElementById("msgSuccess").textContent = "Vente déjà enregistrée - Modifiable";
-  }
+function enregistrerVente() {
+  const article = document.getElementById('article').value;
+  const ttc = parseFloat(document.getElementById('montantTTC').value) || 0;
+  const qte = parseInt(document.getElementById('quantite').value) || 1;
+  const date = document.getElementById('dateVente').value;
+  const ht = parseFloat(document.getElementById('montantHT').value) || 0;
+  const heure = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+
+  if(!article || ttc==0) { alert('Remplis article et montant'); return; }
+
+  let ventes = JSON.parse(localStorage.getItem('ventes_'+date) || '[]');
+  ventes.push({article, qte, ttc, ht, heure, date});
+  localStorage.setItem('ventes_'+date, JSON.stringify(ventes));
+
+  document.getElementById('msgSuccess').style.display='block';
+  document.getElementById('msgSuccess').innerText = 'Vente enregistrée ✓ TVA calculée auto';
+  setTimeout(()=>document.getElementById('msgSuccess').style.display='none', 2000);
+
+  document.getElementById('article').value = '';
+  document.getElementById('montantTTC').value = '';
+  document.getElementById('quantite').value = '1';
+  document.getElementById('montantHT').value = '';
+
+  chargerVentes();
 }
 
-document.getElementById("btnSave").onclick = () => {
-  const btn = document.getElementById("btnSave");
-  btn.disabled = true;
-  btn.textContent = "Enregistrement...";
+function chargerVentes() {
+  const date = document.getElementById('dateVente').value;
+  document.getElementById('dateToday').innerText = new Date(date).toLocaleDateString('fr-FR');
+  calculerAuto();
+}
 
-  const venteTGO = parseFloat(document.getElementById("venteTGO").value) || 0;
-  const venteYAS = parseFloat(document.getElementById("venteYAS").value) || 0;
-  const nbTransactions = parseInt(document.getElementById("nbTransactions").value) || 0;
-  const commentaire = document.getElementById("commentaire").value.trim();
-  const total = venteTGO + venteYAS;
+// CAMERA + PARAMÈTRES + LISTE
+let streamCamera = null;
+async function ouvrirCamera() {
+  const video = document.getElementById('cameraPreview');
+  try {
+    if(streamCamera) streamCamera.getTracks().forEach(track => track.stop());
+    streamCamera = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
+    video.srcObject = streamCamera;
+    video.style.display = 'block';
+    video.onclick = () => {
+      const canvas = document.getElementById('canvasCapture');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      alert('Photo capturée!');
+      streamCamera.getTracks().forEach(track => track.stop());
+      video.style.display = 'none';
+    };
+  } catch(e) { alert('Caméra: ' + e.message); }
+}
 
-  const venteData = {
-    date: today,
-    venteTGO: venteTGO,
-    venteYAS: venteYAS,
-    nbTransactions: nbTransactions,
-    total: total,
-    commentaire: commentaire,
-    timestamp: new Date().toISOString()
+function sauverParams() {
+  const params = {
+    nomBoutique: document.getElementById('nomBoutique').value,
+    nomGerant: document.getElementById('nomGerant').value,
+    regime: document.getElementById('regimeFiscal').value,
+    taux: document.getElementById('tauxImpo').value,
+    numBoutiquier: document.getElementById('numBoutiquier').value
   };
-
-  localStorage.setItem('vente_' + today, JSON.stringify(venteData));
-
-  const msg = document.getElementById("msgSuccess");
-  msg.style.display = "block";
-  msg.textContent = `Vente enregistrée ✓ Total: ${total.toLocaleString()} FCFA`;
-  setTimeout(() => {
-    msg.textContent = "Vente déjà enregistrée - Modifiable";
-  }, 3000);
-
-  btn.disabled = false;
-  btn.textContent = "Enregistrer la vente";
-};
-
-// 3. RÉINITIALISER ESSAI - pour test ou si client paye
-document.getElementById("btnLogout").onclick = () => {
-  if(confirm("Réinitialiser l'essai gratuit? Utilise ça seulement si le client a payé.")) {
-    localStorage.removeItem('date_install_gmb24');
-    location.reload();
+  localStorage.setItem('params_boutique', JSON.stringify(params));
+  let liste = JSON.parse(localStorage.getItem('liste_boutiquiers') || '[]');
+  const exist = liste.find(b => b.tel == params.numBoutiquier);
+  if(!exist && params.numBoutiquier) {
+    liste.push({nom: params.nomGerant, boutique: params.nomBoutique, tel: params.numBoutiquier, regime: params.regime, date: new Date().toLocaleDateString('fr-FR')});
+    localStorage.setItem('liste_boutiquiers', JSON.stringify(liste));
   }
-};
-
-// 4. COPIER NUMERO
-function copierNumero(num) {
-  navigator.clipboard.writeText(num);
-  alert('Numéro ' + num + ' copié!\n\nÉtapes:\n1. *555# Moov ou *145# TMoney\n2. Transfert d\'argent\n3. Colle le numéro\n4. Montant: 2000 FCFA');
+  alert('Sauvegardé ✓');
+  chargerListeBoutiquiers();
+  calculerAuto();
 }
 
-// 5. DÉMARRAGE
-checkEssaiGratuit();
+function chargerParams() {
+  const params = JSON.parse(localStorage.getItem('params_boutique') || '{}');
+  document.getElementById('nomBoutique').value = params.nomBoutique || '';
+  document.getElementById('nomGerant').value = params.nomGerant || '';
+  document.getElementById('regimeFiscal').value = params.regime || 'RAA';
+  document.getElementById('tauxImpo').value = params.taux || 'IS';
+  document.getElementById('numBoutiquier').value = params.numBoutiquier || '';
+}
 
-// 6. PWA
-if('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js');
+function chargerListeBoutiquiers() {
+  const liste = JSON.parse(localStorage.getItem('liste_boutiquiers') || '[]');
+  const table = document.getElementById('tableBoutiquiers');
+  table.innerHTML = '<tr><th>Nom Gérant</th><th>Nom Boutique</th><th>Téléphone</th><th>Date</th></tr>';
+  liste.forEach(b=>table.innerHTML += `<tr><td>${b.nom}</td><td>${b.boutique}</td><td>${b.tel}</td><td>${b.date}</td></tr>`);
+}
+
+function genererCodeAbo() {
+  const dateInstall = localStorage.getItem('date_install_gmb24');
+  const joursPasses = Math.floor((new Date() - new Date(dateInstall)) / 86400000);
+  if(joursPasses < 30) { alert(`Code dispo après 30j. Restant: ${30-joursPasses}j`); return; }
+  const code = 'GMB' + Math.floor(10000 + Math.random()*90000);
+  document.getElementById('codeAboGenere').style.display='block';
+  document.getElementById('codeAboGenere').innerText = code;
+  navigator.clipboard.writeText(code);
+  alert('Code: ' + code);
+}
+
+function remplirMoisAnnee() {
+  const moisSelect = document.getElementById('moisSelect');
+  const anneeSelect = document.getElementById('anneeSelect');
+  const mois = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
+  mois.forEach((m,i)=>moisSelect.innerHTML += `<option value="${i}">${m}</option>`);
+  for(let a=2024; a<=2026; a++) anneeSelect.innerHTML += `<option value="${a}">${a}</option>`;
+  moisSelect.value = new Date().getMonth();
+  anneeSelect.value = new Date().getFullYear();
+}
+
+function chargerMois() {
+  const mois = document.getElementById('moisSelect').value.padStart(2,'0');
+  const annee = document.getElementById('anneeSelect').value;
+  const table = document.getElementById('tableMois');
+  table.innerHTML = '<tr><th>Date</th><th>Article</th><th>TTC</th><th>TVA Coll.</th><th>TVA Déduct.</th><th>TVA Reverser</th></tr>';
+  for(let j=1; j<=31; j++) {
+    const jour = j.toString().padStart(2,'0');
+    const dateKey = `${annee}-${mois}-${jour}`;
+    const ventes = JSON.parse(localStorage.getItem('ventes_'+dateKey) || '[]');
+    const depImpoHT = parseFloat(localStorage.getItem('depImpoHT_'+dateKey) || 0);
+    const tvaDedJour = depImpoHT * 0.18;
+
+    ventes.forEach(v=>{
+      const tvaColl = v.ttc - (v.ttc/1.18);
+      const partCA = ventes.reduce((s,x)=>s+x.ttc,0) > 0? v.ttc / ventes.reduce((s,x)=>s+x.ttc,0) : 0;
+      const tvaDedLigne = tvaDedJour * partCA;
+      const tvaRev = Math.max(0, tvaColl - tvaDedLigne);
+      table.innerHTML += `<tr><td>${jour}/${mois}</td><td>${v.article}</td><td>${v.ttc.toLocaleString()}</td><td class="vert">${tvaColl.toFixed(0)}</td><td class="vert">${tvaDedLigne.toFixed(0)}</td><td class="rouge">${tvaRev.toFixed(0)}</td></tr>`;
+    });
+  }
+}
+
+async function telechargerPDFMois() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const params = JSON.parse(localStorage.getItem('params_boutique') || '{}');
+  const mois = document.getElementById('moisSelect').value.padStart(2,'0');
+  const annee = document.getElementById('anneeSelect').value;
+  doc.text('FICHE CLOTURE TVA MENSUELLE', 105, 20, {align: 'center'});
+  doc.text(`Boutique: ${params.nomBoutique}`, 20, 35);
+  doc.text(`TVA Collectée - TVA Déductible = TVA à reverser`, 20, 45);
+  doc.save(`Fiche_TVA_${mois}_${annee}.pdf`);
 }
 </script>
 </body>
-      </html>
+    </html>
