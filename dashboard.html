@@ -4,10 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GMB24-RAA - Vente du jour</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2563eb">
 <style>
 *{box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial; background:#f8fafc; margin:0; padding:20px}
-.header{display:flex; justify-content:space-between; align-items:center; margin-bottom:25px}
+.header{display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; flex-wrap:wrap; gap:10px}
 h1{color:#1e293b; margin:0; font-size:22px}
 .btn-logout{padding:10px 18px; background:#dc2626; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600}
 .card{background:white; padding:25px; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,0.06); max-width:500px; margin:0 auto}
@@ -33,31 +35,24 @@ input:focus{border-color:#2563eb}
 
 <div class="card">
   <h2>Vente du jour : <span class="date-today" id="dateToday"></span></h2>
-
   <div class="success" id="msgSuccess">Vente enregistrée ✓</div>
-
   <div class="form-group">
     <label>Montant ventes TGO</label>
-    <input type="number" id="venteTGO" placeholder="0" min="0">
+    <input type="number" id="venteTGO" placeholder="0" min="0" inputmode="numeric">
   </div>
-
   <div class="form-group">
     <label>Montant ventes YAS</label>
-    <input type="number" id="venteYAS" placeholder="0" min="0">
+    <input type="number" id="venteYAS" placeholder="0" min="0" inputmode="numeric">
   </div>
-
   <div class="form-group">
     <label>Nombre de transactions</label>
-    <input type="number" id="nbTransactions" placeholder="0" min="0">
+    <input type="number" id="nbTransactions" placeholder="0" min="0" inputmode="numeric">
   </div>
-
   <div class="form-group">
     <label>Commentaire</label>
-    <input type="text" id="commentaire" placeholder="Optionnel">
+    <input type="text" id="commentaire" placeholder="Optionnel" maxlength="200">
   </div>
-
   <button class="btn-save" id="btnSave">Enregistrer la vente</button>
-
   <p class="info">Une seule saisie par jour. Modifiable jusqu’à 23h59</p>
 </div>
 
@@ -67,16 +62,18 @@ import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/fi
 import { auth, db } from "./firebaseConfig.js";
 
 let userId = "";
-const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+const today = new Date().toISOString().split('T')[0];
 document.getElementById("dateToday").textContent = new Date().toLocaleDateString("fr-FR");
 
-// PROTÉGER PAGE + VÉRIFIER LICENCE
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+
 onAuthStateChanged(auth, async (user) => {
   if(!user) {
     window.location.href = "index.html";
     return;
   }
-
   userId = btoa(user.email).replace(/=/g, "");
   await verifierLicence(user.email);
   await chargerVenteDuJour();
@@ -85,23 +82,19 @@ onAuthStateChanged(auth, async (user) => {
 async function verifierLicence(email) {
   const licRef = doc(db, "licences", userId);
   const snap = await getDoc(licRef);
-
   if(!snap.exists()) {
     window.location.href = "index.html";
     return;
   }
-
   const expire = snap.data().expireAt.toDate();
   if(expire <= new Date()) {
     window.location.href = "index.html";
   }
 }
 
-// CHARGER VENTE SI DÉJÀ SAISIE
 async function chargerVenteDuJour() {
   const venteRef = doc(db, "ventes", userId, "jours", today);
   const snap = await getDoc(venteRef);
-
   if(snap.exists()) {
     const data = snap.data();
     document.getElementById("venteTGO").value = data.venteTGO || 0;
@@ -113,18 +106,15 @@ async function chargerVenteDuJour() {
   }
 }
 
-// ENREGISTRER VENTE
 document.getElementById("btnSave").onclick = async () => {
   const btn = document.getElementById("btnSave");
   btn.disabled = true;
   btn.textContent = "Enregistrement...";
-
   const venteTGO = parseFloat(document.getElementById("venteTGO").value) || 0;
   const venteYAS = parseFloat(document.getElementById("venteYAS").value) || 0;
   const nbTransactions = parseInt(document.getElementById("nbTransactions").value) || 0;
   const commentaire = document.getElementById("commentaire").value.trim();
   const total = venteTGO + venteYAS;
-
   try {
     const venteRef = doc(db, "ventes", userId, "jours", today);
     await setDoc(venteRef, {
@@ -137,24 +127,19 @@ document.getElementById("btnSave").onclick = async () => {
       commentaire: commentaire,
       timestamp: serverTimestamp()
     });
-
     const msg = document.getElementById("msgSuccess");
     msg.style.display = "block";
     msg.textContent = `Vente enregistrée ✓ Total: ${total.toLocaleString()} FCFA`;
-
     setTimeout(() => {
       msg.textContent = "Vente déjà enregistrée - Modifiable";
     }, 3000);
-
   } catch(e) {
     alert("Erreur: " + e.message);
   }
-
   btn.disabled = false;
   btn.textContent = "Enregistrer la vente";
 };
 
-// DÉCONNEXION
 document.getElementById("btnLogout").onclick = async () => {
   await signOut(auth);
   window.location.href = "index.html";
