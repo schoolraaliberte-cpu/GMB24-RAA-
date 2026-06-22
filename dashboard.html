@@ -3,494 +3,367 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GMB24 Pro Fiscal - Dashboard</title>
+<title>GMB24-RAA Dashboard</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1e3a8a">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<meta name="theme-color" content="#3498db">
 <style>
-* {box-sizing: border-box}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#f1f5f9;margin:0;padding:0;color:#334155}
-.header{background:#1e3a8a;color:white;padding:15px}
-.header h2{margin:0;font-size:18px}
-.header.user-info{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:14px}
-.header.name{color:#fbbf24;font-weight:bold}
-.btn-deco{background:#dc2626;color:white;border:none;padding:6px 12px;border-radius:6px;font-weight:bold;cursor:pointer;font-size:13px}
-.card{background:white;border-radius:12px;padding:16px;margin:12px 15px;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
-h3{color:#1e293b;margin:0 0 12px 0;font-size:16px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.kpi-label{font-size:12px;color:#64748b;margin-bottom:4px}
-.kpi-value{font-size:20px;font-weight:bold;color:#0f172a}
-.kpi-value.green{color:#059669}
-.kpi-value.red{color:#dc2626}
-label{display:block;margin-top:12px;font-weight:600;font-size:14px;color:#334155}
-input,select{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;margin-top:4px;font-size:15px}
-button{background:#2563eb;color:white;border:none;padding:12px;border-radius:8px;width:100%;font-weight:bold;margin-top:12px;cursor:pointer;font-size:15px}
-button:hover{background:#1d4ed8}
-button.green{background:#059669}
-button.orange{background:#f59e0b}
-button.purple{background:#7c3aed}
-.menu{display:flex;justify-content:space-around;background:white;padding:0;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:10}
-.menu div{cursor:pointer;padding:14px 8px;color:#64748b;font-size:14px;font-weight:500;flex:1;text-align:center}
-.menu div.active{color:#2563eb;border-bottom:3px solid #2563eb}
-.content{padding-bottom:60px}
-.badge{background:#dbeafe;color:#1e40af;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:bold;display:inline-block;margin-top:8px}
-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
-th{background:#1e3a8a;color:white;padding:8px;text-align:left}
-td{padding:8px;border-bottom:1px solid #e2e8f0}
-tr.total{background:#f1f5f9;font-weight:bold}
-.btn-small{padding:6px 10px;font-size:12px;width:auto;display:inline-block;margin:2px}
-.btn-danger{background:#dc2626}
-.filtre{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px;margin-bottom:10px}
-#ecranChargement{position:fixed;top:0;left:0;width:100%;height:100%;background:#1e3a8a;color:white;z-index:9999;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold;flex-direction:column}
-#ecranLicenceExpire{position:fixed;top:0;left:0;width:100%;height:100%;background:#dc2626;color:white;z-index:9999;display:none;align-items:center;justify-content:center;text-align:center;padding:20px}
-.info-box{background:#dbeafe;border-left:4px solid #2563eb;padding:12px;margin:10px 0;border-radius:4px;font-size:13px}
-.hidden{display:none}
+body{font-family:Arial,sans-serif;background:#ecf0f1;margin:0;padding:20px}
+.container{max-width:1100px;margin:auto;background:white;padding:25px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+nav{display:flex;gap:10px;margin-bottom:25px;border-bottom:2px solid #3498db;padding-bottom:10px;flex-wrap:wrap}
+nav button{padding:10px 20px;border:none;background:#bdc3c7;cursor:pointer;border-radius:5px;font-weight:bold}
+nav button.active{background:#3498db;color:white}
+.section{display:none}
+.section.active{display:block}
+input,select{padding:10px;margin:5px;border:1px solid #ccc;border-radius:5px}
+.btn{padding:10px 20px;background:#27ae60;color:white;border:none;border-radius:5px;cursor:pointer;font-weight:bold}
+.btn:hover{background:#219a52}
+table{width:100%;border-collapse:collapse;margin-top:15px;font-size:14px}
+th,td{padding:10px;border:1px solid #ddd;text-align:left}
+th{background:#3498db;color:white}
+.msg{padding:10px;border-radius:5px;margin:10px 0}
+.success{background:#d4edda;color:#155724}
+.error{background:#f8d7da;color:#721c24}
+.warning{background:#fff3cd;color:#856404}
+.camera-box{border:2px dashed #3498db;padding:15px;text-align:center;margin:10px 0}
+video,canvas{max-width:100%;border-radius:5px}
+.phrase{margin-top:30px;padding:15px;background:#2c3e50;color:#f1c40f;text-align:center;font-weight:bold;font-size:18px;border-radius:8px}
+.status-bar{padding:8px;text-align:center;font-size:13px;margin-bottom:15px;border-radius:5px}
+.online{background:#d4edda;color:#155724}
+.offline{background:#f8d7da;color:#721c24}
 </style>
 </head>
 <body>
+<div class="container">
+  <div id="statusBar" class="status-bar"></div>
+  <h2>GMB24-RAA - Tableau de bord</h2>
 
-<div id="ecranChargement">
-<div>Vérification licence...</div>
-<div style="font-size:14px;margin-top:10px">30j gratuit actif</div>
-</div>
+  <nav>
+    <button class="active" onclick="showSection('vente')">Vente du jour</button>
+    <button onclick="showSection('parametres')">Paramètres</button>
+    <button onclick="showSection('cloture')">Clôture OTR</button>
+    <button onclick="logout()">Déconnexion</button>
+  </nav>
 
-<div id="ecranLicenceExpire">
-<div>
-<h2>Licence Expirée</h2>
-<p>Contacte le propriétaire pour renouveler 5000F/30j</p>
-<button onclick="window.location.href='./index.html'">Se déconnecter</button>
-</div>
-</div>
+  <div class="section active" id="vente">
+    <h3>Enregistrer une vente</h3>
+    <input type="date" id="dateVente">
+    <input type="text" id="nomClient" placeholder="Nom client">
+    <input type="text" id="article" placeholder="Article">
+    <input type="number" id="quantite" placeholder="Quantité" min="1">
+    <input type="number" id="prixTTC" placeholder="Prix TTC" step="0.01">
+    <input type="number" id="prixHT" placeholder="Prix HT" step="0.01">
 
-<div id="appContenu" style="display:none">
+    <div class="camera-box" id="cameraBox">
+      <p>Photo de profil obligatoire OTR</p>
+      <video id="video" autoplay class="hidden"></video>
+      <canvas id="canvas" class="hidden"></canvas>
+      <button class="btn" onclick="startCamera()">Activer camera</button>
+      <button class="btn" onclick="takePhoto()">Prendre photo</button>
+    </div>
 
-<div class="header">
-<h2>GMB24 Pro Fiscal</h2>
-<div class="user-info">
-<span><span class="name" id="nomHeader">Gérant</span> | <span id="userId"></span></span>
-<button class="btn-deco" onclick="deconnexion()">Déconnexion</button>
-</div>
-</div>
+    <button class="btn" onclick="saveVente()">Enregistrer la vente</button>
+    <div id="venteMsg"></div>
 
-<div class="content">
+    <h3>Filtrer par mois</h3>
+    <input type="month" id="filterMonth" onchange="loadVentes()">
 
-<div class="menu">
-<div class="active" onclick="showSection('dashboard', this)">📊 Ventes</div>
-<div onclick="showSection('fiscal', this)">⚙️ Paramètres</div>
-</div>
+    <table>
+      <thead><tr><th>Date</th><th>Client</th><th>Article</th><th>Qté</th><th>TTC</th><th>HT</th><th>Statut</th></tr></thead>
+      <tbody id="ventesTable"></tbody>
+    </table>
+  </div>
 
-<!-- DASHBOARD VENTES -->
-<div id="dashboard" class="section">
-<div class="filtre">
-<label>📅 Filtrer par mois :</label>
-<input type="month" id="filtreMois" onchange="afficherInventaire()">
-<button onclick="cloturerMois()" class="orange">🔒 Clôturer Mois & Générer CFE</button>
-</div>
+  <div class="section" id="parametres">
+    <h3>Paramètres boutique</h3>
+    <input type="text" id="nomBoutique" placeholder="Nom boutique">
+    <input type="text" id="gerant" placeholder="Gérant">
+    <input type="text" id="ifu" placeholder="IFU">
+    <input type="text" id="cfe" placeholder="CFE">
+    <input type="number" id="tauxOTR" placeholder="Taux OTR %" step="0.01">
+    <input type="number" id="tauxIS" placeholder="IS/IRPP %" step="0.01">
+    <input type="number" id="tva" placeholder="TVA %" step="0.01">
+    <input type="number" id="tvaOTR" placeholder="TVA OTR 1%" step="0.01">
+    <h4>Dépenses du mois</h4>
+    <input type="number" id="depImposable" placeholder="Dépenses imposables">
+    <input type="number" id="depNonImposable" placeholder="Dépenses non imposables">
+    <button class="btn" onclick="saveParams()">Enregistrer paramètres</button>
+    <div id="paramMsg"></div>
+    <div class="phrase">LA CONFIANCE à GMB24-RAA pour une meilleure gestion</div>
+  </div>
 
-<div class="grid">
-<div class="card"><div class="kpi-label">💰 Ventes TTC Mois</div><div class="kpi-value" id="ventesMois">0 FCFA</div></div>
-<div class="card"><div class="kpi-label">📉 Dép. Non Imposables</div><div class="kpi-value red" id="depNonImpMois">0 FCFA</div></div>
-<div class="card"><div class="kpi-label">📊 TVA Collectée</div><div class="kpi-value" id="tvaMois">0 FCFA</div></div>
-<div class="card"><div class="kpi-label">💵 Profit Net OTR</div><div class="kpi-value green" id="profitNet">0 FCFA</div></div>
-</div>
-
-<div class="card">
-<h3>📝 Enregistrer Vente du Jour</h3>
-<label>Date de vente :</label>
-<input type="date" id="dateVente">
-<label>Nom du Client :</label><input type="text" id="nomClient" placeholder="Ex: M. Kossi">
-<label>Article vendu :</label><input type="text" id="article" placeholder="Ex: Sac riz 50kg">
-<label>Quantité :</label><input type="number" id="quantite" value="1" min="1">
-<label>Prix TTC FCFA :</label><input type="number" id="prixTTC" onblur="calculerLigne()">
-<label>Montant HT :</label><input type="number" id="montantHT" readonly style="background:#f1f5f9">
-<button class="green" onclick="ajouterLigne()">➕ Enregistrer la vente</button>
-
-<table id="tableInventaire">
-<thead><tr><th>Date</th><th>Client</th><th>Article</th><th>Qté</th><th>TTC</th><th>HT</th><th>Action</th></tr></thead>
-<tbody></tbody>
-<tfoot><tr class="total"><td colspan="4">TOTAL MOIS</td><td id="totalTTC">0</td><td id="totalHT">0</td><td></td></tr></tfoot>
-</table>
-</div>
-
-<div class="card">
-<h3>📋 Résultat Clôture Mensuelle OTR</h3>
-<div id="resultatInventaire"></div>
-</div>
+  <div class="section" id="cloture">
+    <h3>Clôture mensuelle OTR</h3>
+    <p style="font-size:13px;color:#666">Sans internet: calcul local. Avec internet: calcul exact Firebase.</p>
+    <input type="month" id="clotureMonth" onchange="calcCloture()">
+    <div id="clotureResult"></div>
+    <button class="btn" onclick="generatePDF()">Télécharger PDF OTR</button>
+  </div>
 </div>
 
-<!-- PARAMETRES OTR + ADMIN -->
-<div id="fiscal" class="section" style="display:none">
-<div class="card">
-<h3>👤 Boutique</h3>
-<label>Nom Boutique :</label><input type="text" id="nomBoutique" onblur="saveParams()">
-<label>Gérant :</label><input type="text" id="nomCreateur" onblur="saveParams()">
-<label>IFU :</label><input type="text" id="ifu" onblur="saveParams()">
-<label>CFE :</label><input type="text" id="numCFE" onblur="saveParams()">
-</div>
+<script>
+// Service Worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js');
+}
 
-<div class="card">
-<h3>📊 Taux OTR</h3>
-<label>IS/IRPP % :</label><input type="number" id="tauxImpot" step="0.1" onblur="saveParams()">
-<label>TVA % :</label><input type="number" id="tauxTVA" step="0.1" onblur="saveParams()">
-<label>TVA OTR 1% :</label><input type="number" id="tauxTvaOtr" step="0.1" onblur="saveParams()">
-<div class="badge" id="resumeTaux"></div>
-</div>
-
-<div class="card">
-<h3>💰 Dépenses du Mois - Séparées OTR</h3>
-<div class="info-box">Dép. Non Imposables = Achat marchandises, transport, carburant<br>Dép. Imposables = Salaire, loyer, pub, électricité</div>
-<label>Dépenses Non Imposables :</label><input type="number" id="depNonImposables" onblur="saveParams()" placeholder="Marchandises, transport...">
-<label>Dépenses Imposables :</label><input type="number" id="depImposables" onblur="saveParams()" placeholder="Loyer, salaire, pub...">
-</div>
-
-<div id="blocAdmin" class="card hidden">
-<h3>🔑 Générer Code Licence Client</h3>
-<label>Numéro client :</label><input type="tel" id="phoneGen" placeholder="+228 90...">
-<button class="purple" onclick="genererCodeLicence()">Générer Code 30j</button>
-<div id="codeGenere" class="success" style="display:none;margin-top:10px"></div>
-</div>
-
-</div>
-
-</div>
-</div>
+// Status online/offline
+function updateStatus(){
+  const bar = document.getElementById('statusBar');
+  if(navigator.onLine){
+    bar.className = 'status-bar online';
+    bar.textContent = 'Connecté - Sync auto activé';
+    syncData();
+  } else {
+    bar.className = 'status-bar offline';
+    bar.textContent = 'Mode hors ligne - Ventes sauvées localement';
+  }
+}
+window.addEventListener('online', updateStatus);
+window.addEventListener('offline', updateStatus);
+updateStatus();
+</script>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@7/+esm';
 
 const firebaseConfig = {
-apiKey: "AIzaSyCBYnjsBMJGeR57Kk3FX9zeIplE5EFkcIY",
-authDomain: "gmb24-raa.firebaseapp.com",
-databaseURL: "https://gmb24-raa-default-rtdb.europe-west1.firebasedatabase.app",
-projectId: "gmb24-raa",
-storageBucket: "gmb24-raa.firebasestorage.app",
-messagingSenderId: "558507911211",
-appId: "1:558507911211:web:5cdc99c082fe653684626e",
-measurementId: "G-KVHFHTJVFN"
+  apiKey: "AIzaSyCBYnjsBMJGeR57Kk3FX9zeIplE5EFkcIY",
+  authDomain: "gmb24-raa.firebaseapp.com",
+  projectId: "gmb24-raa",
+  storageBucket: "gmb24-raa.firebasestorage.app",
+  messagingSenderId: "558507911211",
+  appId: "1:558507911211:web:5cdc99c082fe653684626e"
 };
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-let userId = "";
-let userPhone = localStorage.getItem('userPhone') || "";
-let inventaire = [];
-let isOwner = false;
+let currentUser = null;
+let stream = null;
+let photoData = null;
 
-// SERVICE WORKER
-if('serviceWorker' in navigator) {
-navigator.serviceWorker.register('sw.js');
-}
-
-// 1. VERIFIER ACCES + LICENCE
-onAuthStateChanged(auth, async (user) => {
-if(user) {
-isOwner = true;
-userId = user.uid;
-document.getElementById('userId').innerText = user.email;
-document.getElementById('blocAdmin').classList.remove('hidden');
-document.getElementById('ecranChargement').style.display = 'none';
-document.getElementById('appContenu').style.display = 'block';
-initApp();
-} else if(userPhone) {
-userId = userPhone;
-document.getElementById('userId').innerText = userPhone;
-await checkLicence();
-} else {
-window.location.href = './index.html';
-}
+const dbPromise = openDB('gmb24-db', 1, {
+  upgrade(db) {
+    db.createObjectStore('ventes', {keyPath: 'id', autoIncrement: true});
+    db.createObjectStore('syncQueue', {keyPath: 'id', autoIncrement: true});
+    db.createObjectStore('parametres', {keyPath: 'uid'});
+  }
 });
 
-// 2. CHECK LICENCE CLIENT
-async function checkLicence() {
-const docRef = doc(db, "licences", userPhone);
-const docSnap = await getDoc(docRef);
-
-if(docSnap.exists()) {
-const data = docSnap.data();
-const dateExpire = new Date(data.dateExpire);
-const now = new Date();
-
-if(dateExpire > now) {
-document.getElementById('ecranChargement').style.display = 'none';
-document.getElementById('appContenu').style.display = 'block';
-initApp();
-} else {
-document.getElementById('ecranChargement').style.display = 'none';
-document.getElementById('ecranLicenceExpire').style.display = 'flex';
-}
-} else {
-document.getElementById('ecranChargement').style.display = 'none';
-document.getElementById('ecranLicenceExpire').style.display = 'flex';
-}
-}
-
-// 3. DECONNEXION
-window.deconnexion = async function() {
-if(isOwner) await signOut(auth);
-localStorage.clear();
-window.location.href = './index.html';
-}
-
-async function initApp() {
-await loadParams();
-await loadInventaire();
-document.getElementById('dateVente').valueAsDate = new Date();
-let moisActuel = new Date().toISOString().slice(0,7);
-document.getElementById('filtreMois').value = moisActuel;
-afficherInventaire();
-updateDashboard();
-}
-
-window.showSection = function(id, el) {
-document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
-document.getElementById(id).style.display = 'block';
-document.querySelectorAll('.menu div').forEach(m => m.classList.remove('active'));
-if(el) el.classList.add('active');
-}
-
-// 4. PARAMETRES FIRESTORE
-async function loadParams() {
-const docRef = doc(db, "parametres", userId);
-const docSnap = await getDoc(docRef);
-const data = docSnap.exists() ? docSnap.data() : {};
-
-document.getElementById('nomBoutique').value = data.nomBoutique || 'Ma Boutique';
-document.getElementById('nomCreateur').value = data.nomCreateur || 'Gérant';
-document.getElementById('nomHeader').innerText = data.nomCreateur || 'Gérant';
-document.getElementById('ifu').value = data.ifu || '';
-document.getElementById('numCFE').value = data.numCFE || '';
-document.getElementById('tauxImpot').value = data.tauxImpot || 27;
-document.getElementById('tauxTVA').value = data.tauxTVA || 18;
-document.getElementById('tauxTvaOtr').value = data.tauxTvaOtr || 1;
-document.getElementById('depNonImposables').value = data.depNonImposables || 0;
-document.getElementById('depImposables').value = data.depImposables || 0;
-updateResumeTaux();
-}
-
-window.saveParams = async function() {
-const data = {
-nomBoutique: document.getElementById('nomBoutique').value,
-nomCreateur: document.getElementById('nomCreateur').value,
-ifu: document.getElementById('ifu').value,
-numCFE: document.getElementById('numCFE').value,
-tauxImpot: parseFloat(document.getElementById('tauxImpot').value),
-tauxTVA: parseFloat(document.getElementById('tauxTVA').value),
-tauxTvaOtr: parseFloat(document.getElementById('tauxTvaOtr').value),
-depNonImposables: parseFloat(document.getElementById('depNonImposables').value || 0),
-depImposables: parseFloat(document.getElementById('depImposables').value || 0)
-};
-await setDoc(doc(db, "parametres", userId), data);
-document.getElementById('nomHeader').innerText = data.nomCreateur;
-updateResumeTaux();
-updateDashboard();
-}
-
-function updateResumeTaux() {
-const taux = document.getElementById('tauxImpot').value;
-const tva = document.getElementById('tauxTVA').value;
-const tvaOtr = document.getElementById('tauxTvaOtr').value;
-document.getElementById('resumeTaux').innerText = `IS/IRPP: ${taux}% | TVA: ${tva}% | TVA OTR: ${tvaOtr}%`;
-}
-
-// 5. VENTES FIRESTORE
-window.calculerLigne = function() {
-const prixTTC = parseFloat(document.getElementById('prixTTC').value || 0);
-const tauxTVA = parseFloat(document.getElementById('tauxTVA').value || 0) / 100;
-const prixHT = tauxTVA === 0 ? prixTTC : prixTTC / (1 + tauxTVA);
-document.getElementById('montantHT').value = Math.round(prixHT);
-}
-
-window.ajouterLigne = async function() {
-const dateVente = document.getElementById('dateVente').value;
-const client = document.getElementById('nomClient').value.trim();
-const article = document.getElementById('article').value.trim();
-const qte = parseInt(document.getElementById('quantite').value || 1);
-const prixTTC = parseFloat(document.getElementById('prixTTC').value || 0);
-const prixHT = parseFloat(document.getElementById('montantHT').value || 0);
-
-if(!dateVente || !client || !article || prixTTC <= 0) {
-alert('Remplis tous les champs');
-return;
-}
-
-await addDoc(collection(db, "ventes"), {
-userId, date: dateVente, client, article, qte, prixTTC, prixHT, created: new Date()
+onAuthStateChanged(auth, async user=>{
+  if(!user) return window.location.href = "index.html";
+  currentUser = user;
+  document.getElementById('dateVente').valueAsDate = new Date();
+  document.getElementById('filterMonth').value = new Date().toISOString().slice(0,7);
+  document.getElementById('clotureMonth').value = new Date().toISOString().slice(0,7);
+  await checkLicenceAndLoad();
 });
 
-document.getElementById('nomClient').value = '';
-document.getElementById('article').value = '';
-document.getElementById('quantite').value = '1';
-document.getElementById('prixTTC').value = '';
-document.getElementById('montantHT').value = '';
-
-await loadInventaire();
-afficherInventaire();
-updateDashboard();
+async function checkLicenceAndLoad(){
+  const ref = doc(db, "licences", currentUser.uid);
+  const snap = await getDoc(ref);
+  if(!snap.exists() || new Date(snap.data().expireAt.toDate()) < new Date()){
+    alert("Licence expirée");
+    window.location.href = "index.html";
+  }
+  loadVentes();
+  loadParams();
 }
 
-async function loadInventaire() {
-const q = query(collection(db, "ventes"), where("userId", "==", userId));
-const snapshot = await getDocs(q);
-inventaire = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+window.showSection = function(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
 }
 
-function getInventaireMois() {
-let moisFiltre = document.getElementById('filtreMois').value;
-return inventaire.filter(l => l.date.startsWith(moisFiltre));
+window.startCamera = async function(){
+  stream = await navigator.mediaDevices.getUserMedia({video:true});
+  document.getElementById('video').srcObject = stream;
+  document.getElementById('video').classList.remove('hidden');
+}
+window.takePhoto = function(){
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video,0,0);
+  photoData = canvas.toDataURL('image/png');
+  canvas.classList.remove('hidden');
+  stream.getTracks().forEach(t=>t.stop());
 }
 
-window.afficherInventaire = function() {
-let inventaireMois = getInventaireMois();
-const tbody = document.querySelector('#tableInventaire tbody');
-tbody.innerHTML = '';
-let totalTTC = 0;
-let totalHT = 0;
+window.saveVente = async function(){
+  const msg = document.getElementById('venteMsg');
+  if(!photoData) return msg.innerHTML = '<div class="msg error">Photo de profil obligatoire OTR</div>';
 
-inventaireMois.forEach((ligne) => {
-const montantTTC = ligne.prixTTC * ligne.qte;
-const montantHT = ligne.prixHT * ligne.qte;
-totalTTC += montantTTC;
-totalHT += montantHT;
-tbody.innerHTML += `<tr><td>${ligne.date}</td><td>${ligne.client}</td><td>${ligne.article}</td><td>${ligne.qte}</td><td>${montantTTC.toLocaleString()}</td><td>${montantHT.toLocaleString()}</td><td><button class="btn-small btn-danger" onclick="supprimerLigne('${ligne.id}')">🗑️</button></td></tr>`;
-});
+  const vente = {
+    uid: currentUser.uid,
+    date: document.getElementById('dateVente').value,
+    client: document.getElementById('nomClient').value,
+    article: document.getElementById('article').value,
+    quantite: Number(document.getElementById('quantite').value),
+    prixTTC: Number(document.getElementById('prixTTC').value),
+    prixHT: Number(document.getElementById('prixHT').value),
+    photoProfil: photoData,
+    createdAt: new Date().toISOString(),
+    synced: navigator.onLine
+  };
 
-document.getElementById('totalTTC').innerText = totalTTC.toLocaleString();
-document.getElementById('totalHT').innerText = totalHT.toLocaleString();
+  const idb = await dbPromise;
+  
+  if(navigator.onLine){
+    await addDoc(collection(db, "ventes"), vente);
+    msg.innerHTML = '<div class="msg success">Vente enregistrée en ligne</div>';
+  } else {
+    await idb.add('ventes', vente);
+    await idb.add('syncQueue', {data: vente, type: 'addVente'});
+    msg.innerHTML = '<div class="msg success">Vente sauvée hors ligne. Sync à la reconnexion.</div>';
+  }
+  
+  photoData = null;
+  document.getElementById('canvas').classList.add('hidden');
+  loadVentes();
 }
 
-window.supprimerLigne = async function(id) {
-if(confirm('Supprimer cette vente?')) {
-await deleteDoc(doc(db, "ventes", id));
-await loadInventaire();
-afficherInventaire();
-updateDashboard();
-}
-}
-
-// 6. CALCUL OTR AVEC 2 TYPES DEPENSES
-function updateDashboard() {
-let inventaireMois = getInventaireMois();
-const totalTTC = inventaireMois.reduce((sum, l) => sum + (l.prixTTC * l.qte), 0);
-const depNonImp = parseFloat(document.getElementById('depNonImposables').value || 0);
-const calc = calculerProfitNetOTR(totalTTC, depNonImp);
-
-document.getElementById('ventesMois').innerText = totalTTC.toLocaleString() + ' FCFA';
-document.getElementById('depNonImpMois').innerText = depNonImp.toLocaleString() + ' FCFA';
-document.getElementById('tvaMois').innerText = calc.tvaCollectee.toLocaleString() + ' FCFA';
-document.getElementById('profitNet').innerText = calc.profitNet.toLocaleString() + ' FCFA';
+window.syncData = async function(){
+  if(!navigator.onLine || !currentUser) return;
+  const idb = await dbPromise;
+  const queue = await idb.getAll('syncQueue');
+  
+  for(let item of queue){
+    if(item.type === 'addVente'){
+      await addDoc(collection(db, "ventes"), item.data);
+      await idb.delete('syncQueue', item.id);
+    }
+  }
+  
+  if(queue.length > 0){
+    document.getElementById('venteMsg').innerHTML = `<div class="msg success">${queue.length} vente(s) synchronisée(s) sur Firebase</div>`;
+    loadVentes();
+  }
 }
 
-function calculerProfitNetOTR(ventesTTC, depNonImposables) {
-const tauxImpot = parseFloat(document.getElementById('tauxImpot').value || 0) / 100;
-const tauxTVA = parseFloat(document.getElementById('tauxTVA').value || 0) / 100;
-const tauxTvaOtr = parseFloat(document.getElementById('tauxTvaOtr').value || 0) / 100;
-const depImposables = parseFloat(document.getElementById('depImposables').value || 0);
-
-const ventesHT = tauxTVA === 0 ? ventesTTC : ventesTTC / (1 + tauxTVA);
-const tva = ventesTTC - ventesHT;
-const beneficeBrut = ventesHT - depNonImposables;
-const beneficeImposable = beneficeBrut - depImposables;
-const impot = beneficeImposable > 0 ? beneficeImposable * tauxImpot : 0;
-const tvaOtr = ventesTTC * tauxTvaOtr;
-const profitNet = beneficeImposable - impot - tvaOtr;
-
-return {
-ventesHT: Math.round(ventesHT), 
-tvaCollectee: Math.round(tva), 
-beneficeBrut: Math.round(beneficeBrut),
-beneficeImposable: Math.round(beneficeImposable),
-impot: Math.round(impot), 
-tvaOtr: Math.round(tvaOtr), 
-profitNet: Math.round(profitNet)
-};
+async function loadVentes(){
+  const month = document.getElementById('filterMonth').value;
+  const tbody = document.getElementById('ventesTable');
+  tbody.innerHTML = "";
+  
+  const idb = await dbPromise;
+  let ventes = [];
+  
+  if(navigator.onLine){
+    const q = query(collection(db,"ventes"), where("uid","==",currentUser.uid), where("date",">=",month+"-01"), where("date","<=",month+"-31"));
+    const snap = await getDocs(q);
+    snap.forEach(d=>ventes.push(d.data()));
+  } else {
+    ventes = await idb.getAll('ventes');
+    ventes = ventes.filter(v=>v.uid===currentUser.uid && v.date>=month+"-01" && v.date<=month+"-31");
+  }
+  
+  ventes.forEach(v=>{
+    const statut = v.synced ? 'Sync' : 'Local';
+    const color = v.synced ? '#27ae60' : '#f39c12';
+    tbody.innerHTML += `<tr><td>${v.date}</td><td>${v.client}</td><td>${v.article}</td><td>${v.quantite}</td><td>${v.prixTTC}</td><td>${v.prixHT}</td><td style="color:${color}">${statut}</td></tr>`;
+  });
 }
 
-// 7. CLOTURE + PDF
-window.cloturerMois = function() {
-let inventaireMois = getInventaireMois();
-if(inventaireMois.length === 0) {
-alert('Aucune vente ce mois');
-return;
+async function loadParams(){
+  const idb = await dbPromise;
+  let p = null;
+  
+  if(navigator.onLine){
+    const snap = await getDoc(doc(db,"parametres",currentUser.uid));
+    if(snap.exists()){
+      p = snap.data();
+      await idb.put('parametres', {...p, uid: currentUser.uid});
+    }
+  } else {
+    p = await idb.get('parametres', currentUser.uid);
+  }
+  
+  if(p){
+    Object.keys(p).forEach(k=>{
+      if(document.getElementById(k)) document.getElementById(k).value = p[k];
+    });
+  }
 }
 
-const ventesTTC = inventaireMois.reduce((sum, l) => sum + (l.prixTTC * l.qte), 0);
-const depNonImp = parseFloat(document.getElementById('depNonImposables').value || 0);
-const calc = calculerProfitNetOTR(ventesTTC, depNonImp);
-const nomBoutique = document.getElementById('nomBoutique').value;
-const nom = document.getElementById('nomCreateur').value;
-const moisFiltre = document.getElementById('filtreMois').value;
-const mois = new Date(moisFiltre + '-01').toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'});
-
-let lignesHTML = '';
-inventaireMois.forEach(l => {
-const ttc = l.prixTTC * l.qte;
-const ht = l.prixHT * l.qte;
-lignesHTML += `<tr><td>${l.date}</td><td>${l.client}</td><td>${l.article}</td><td>${l.qte}</td><td>${ttc.toLocaleString()}</td><td>${ht.toLocaleString()}</td></tr>`;
-});
-
-document.getElementById('resultatInventaire').innerHTML = `
-<h3 style="text-align:center">${nomBoutique.toUpperCase()}</h3>
-<p style="text-align:center">FICHE CFE - ${mois}</p>
-<p><b>Gérant:</b> ${nom} | <b>IFU:</b> ${document.getElementById('ifu').value}</p>
-<table><thead><tr><th>Date</th><th>Client</th><th>Article</th><th>Qté</th><th>TTC</th><th>HT</th></tr></thead>
-<tbody>${lignesHTML}</tbody>
-<tr class="total"><td colspan="4">TOTAL</td><td>${ventesTTC.toLocaleString()}</td><td>${calc.ventesHT.toLocaleString()}</td></tr></table>
-<br><b>Dép. Non Imposables:</b> ${depNonImp.toLocaleString()} FCFA<br>
-<b>Bénéfice Brut:</b> ${calc.beneficeBrut.toLocaleString()} FCFA<br>
-<b>Dép. Imposables:</b> ${document.getElementById('depImposables').value} FCFA<br>
-<b>Bénéfice Imposable:</b> ${calc.beneficeImposable.toLocaleString()} FCFA<br>
-<b>IS/IRPP ${document.getElementById('tauxImpot').value}%:</b> ${calc.impot.toLocaleString()} FCFA<br>
-<b>TVA ${document.getElementById('tauxTVA').value}%:</b> ${calc.tvaCollectee.toLocaleString()} FCFA<br>
-<b>TVA OTR ${document.getElementById('tauxTvaOtr').value}%:</b> ${calc.tvaOtr.toLocaleString()} FCFA<br>
-<b style="color:#059669;font-size:18px">À PAYER OTR: ${(calc.impot + calc.tvaCollectee + calc.tvaOtr).toLocaleString()} FCFA</b>
-<br><button class="green" onclick="exporterPDF()">📥 Exporter PDF</button>`;
+window.saveParams = async function(){
+  const data = {
+    uid: currentUser.uid,
+    nomBoutique: document.getElementById('nomBoutique').value,
+    gerant: document.getElementById('gerant').value,
+    ifu: document.getElementById('ifu').value,
+    cfe: document.getElementById('cfe').value,
+    tauxOTR: Number(document.getElementById('tauxOTR').value),
+    tauxIS: Number(document.getElementById('tauxIS').value),
+    tva: Number(document.getElementById('tva').value),
+    tvaOTR: Number(document.getElementById('tvaOTR').value),
+    depImposable: Number(document.getElementById('depImposable').value),
+    depNonImposable: Number(document.getElementById('depNonImposable').value)
+  };
+  
+  const idb = await dbPromise;
+  await idb.put('parametres', data);
+  
+  if(navigator.onLine){
+    await setDoc(doc(db,"parametres",currentUser.uid), data);
+    document.getElementById('paramMsg').innerHTML = '<div class="msg success">Paramètres sauvés en ligne</div>';
+  } else {
+    document.getElementById('paramMsg').innerHTML = '<div class="msg warning">Paramètres sauvés localement. Sync à la reconnexion.</div>';
+  }
 }
 
-window.exporterPDF = function() {
-const { jsPDF } = window.jspdf;
-const doc = new jsPDF();
-const nomBoutique = document.getElementById('nomBoutique').value;
-const moisFiltre = document.getElementById('filtreMois').value;
-const mois = new Date(moisFiltre + '-01').toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'});
-const inventaireMois = getInventaireMois();
-const ventesTTC = inventaireMois.reduce((sum, l) => sum + (l.prixTTC * l.qte), 0);
-const depNonImp = parseFloat(document.getElementById('depNonImposables').value || 0);
-const calc = calculerProfitNetOTR(ventesTTC, depNonImp);
+window.calcCloture = async function(){
+  const month = document.getElementById('clotureMonth').value;
+  const idb = await dbPromise;
+  let ventes = [];
+  
+  if(navigator.onLine){
+    const q = query(collection(db,"ventes"), where("uid","==",currentUser.uid), where("date",">=",month+"-01"), where("date","<=",month+"-31"));
+    const snap = await getDocs(q);
+    snap.forEach(d=>ventes.push(d.data()));
+  } else {
+    ventes = await idb.getAll('ventes');
+    ventes = ventes.filter(v=>v.uid===currentUser.uid && v.date>=month+"-01" && v.date<=month+"-31");
+  }
+  
+  let totalTTC = 0, totalHT = 0;
+  const articles = {};
+  ventes.forEach(v=>{
+    totalTTC += v.prixTTC * v.quantite;
+    totalHT += v.prixHT * v.quantite;
+    articles[v.article] = (articles[v.article]||0) + v.quantite;
+  });
+  
+  const param = await idb.get('parametres', currentUser.uid);
+  const tauxOTR = param?.tauxOTR || 0;
+  const otr = totalHT * tauxOTR / 100;
 
-doc.setFontSize(16);
-doc.text(nomBoutique, 105, 20, {align: 'center'});
-doc.setFontSize(12);
-doc.text('FICHE CFE - ' + mois, 105, 28, {align: 'center'});
-
-let y = 45;
-doc.text(`Bénéfice Brut: ${calc.beneficeBrut.toLocaleString()} FCFA`, 14, y); y+=7;
-doc.text(`Bénéfice Imposable: ${calc.beneficeImposable.toLocaleString()} FCFA`, 14, y); y+=7;
-doc.text(`IS/IRPP: ${calc.impot.toLocaleString()} FCFA`, 14, y); y+=7;
-doc.text(`TVA: ${calc.tvaCollectee.toLocaleString()} FCFA`, 14, y); y+=7;
-doc.text(`TVA OTR: ${calc.tvaOtr.toLocaleString()} FCFA`, 14, y); y+=10;
-doc.setFontSize(14);
-doc.text(`A PAYER OTR: ${(calc.impot + calc.tvaCollectee + calc.tvaOtr).toLocaleString()} FCFA`, 14, y);
-
-doc.save(`CFE_${mois.replace(' ', '_')}.pdf`);
+  let html = `<h4>Résultats ${month}</h4>
+    <p>Total TTC: ${totalTTC.toFixed(2)} FCFA</p>
+    <p>Total HT: ${totalHT.toFixed(2)} FCFA</p>
+    <p>OTR ${tauxOTR}%: ${otr.toFixed(2)} FCFA</p>
+    <h4>Inventaire par article</h4>`;
+  Object.keys(articles).forEach(a=> html += `<p>${a}: ${articles[a]} unités</p>`);
+  
+  if(!navigator.onLine){
+    html += '<p style="color:#f39c12;font-size:13px">Calcul local. Reconnexion pour calcul exact Firebase.</p>';
+  }
+  document.getElementById('clotureResult').innerHTML = html;
 }
 
-// 8. GENERER CODE LICENCE - PROPRIETAIRE SEUL
-window.genererCodeLicence = async function() {
-const phone = document.getElementById('phoneGen').value.trim();
-if(!phone) return alert('Entre le numéro client');
+window.generatePDF = function(){
+  alert("PDF avec 2 signatures OTR à générer. Étape suivante après test.");
+}
 
-const code = Math.random().toString(36).substring(2,8).toUpperCase();
-await setDoc(doc(db, "codesLicence", code), {
-phone, utilise: false, created: new Date().toISOString()
-});
-
-const div = document.getElementById('codeGenere');
-div.innerText = `Code généré: ${code} → Envoie ce code au client pour 30j`;
-div.style.display = 'block';
+window.logout = function(){
+  signOut(auth);
+  window.location.href = "index.html";
 }
 </script>
 </body>
