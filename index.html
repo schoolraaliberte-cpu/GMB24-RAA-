@@ -4,195 +4,211 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GMB24-RAA - Connexion</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#3498db">
 <style>
-body{font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:20px;display:flex;justify-content:center;align-items:center;min-height:100vh}
-.container{background:white;padding:30px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);max-width:400px;width:100%}
-h2{text-align:center;color:#2c3e50;margin-bottom:20px}
-input{width:100%;padding:12px;margin:10px 0;border:1px solid #ddd;border-radius:5px;box-sizing:border-box}
-button{width:100%;padding:12px;background:#27ae60;color:white;border:none;border-radius:5px;cursor:pointer;font-size:16px;margin-top:10px}
-button:hover{background:#219a52}
-.btn-red{background:#e74c3c}.btn-red:hover{background:#c0392b}
-.btn-orange{background:#f39c12}.btn-orange:hover{background:#e67e22}
+*{box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#f0f2f5; margin:0; padding:20px}
+.box{background:white; padding:35px; border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.08); width:100%; max-width:360px}
+h2{text-align:center; color:#1e293b; margin:0 0 25px 0; font-size:24px}
+input{width:100%; padding:14px; margin:10px 0; border:1px solid #cbd5e1; border-radius:8px; font-size:15px; outline:none; transition:border 0.2s}
+input:focus{border-color:#2563eb}
+button{width:100%; padding:14px; background:#2563eb; color:white; border:none; border-radius:8px; cursor:pointer; margin-top:12px; font-weight:600; font-size:15px; transition:background 0.2s}
+button:hover{background:#1d4ed8}
+button:disabled{background:#94a3b8; cursor:not-allowed}
 .hidden{display:none}
-.locked{background:#fff3cd;border:2px solid #f39c12;padding:20px;border-radius:10px;text-align:center}
-.num-paiement{font-size:18px;font-weight:bold;color:#2c3e50;margin:15px 0}
-.msg{padding:10px;border-radius:5px;margin:10px 0;text-align:center}
-.error{background:#f8d7da;color:#721c24}
-.success{background:#d4edda;color:#155724}
-.warning{background:#fff3cd;color:#856404}
-.popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:1000}
-.popup-content{background:white;padding:30px;border-radius:10px;max-width:350px;width:90%}
-.info-box{background:#d1ecf1;border:1px solid #bee5eb;color:#0c5460;padding:12px;border-radius:5px;margin:15px 0;font-size:13px}
+.locked{text-align:center}
+.locked h2{color:#dc2626; font-size:22px}
+.paiement{background:#fef3c7; padding:18px; border-radius:10px; margin:20px 0; border-left:4px solid #f59e0b; text-align:left}
+.paiement b{font-size:16px}
+.call-btn{background:#16a34a; margin-top:8px}
+.call-btn:hover{background:#15803d}
+.info{font-size:13px; color:#64748b; text-align:center; margin-top:15px}
 </style>
 </head>
 <body>
-<div class="container" id="loginBox">
+
+<!-- ÉCRAN 1: LOGIN EMAIL LINK -->
+<div class="box" id="loginBox">
   <h2>GMB24-RAA</h2>
+  <input type="email" id="email" placeholder="Ton email" value="schoolraaliberte@gmail.com">
+  <button id="btnSendCode">Recevoir le code par email</button>
+  <div id="codeBox" class="hidden">
+    <p class="info">Code envoyé. Vérifie ta boîte + spams</p>
+    <input type="text" id="code" placeholder="Colle le code ici">
+    <button id="btnVerify">Entrer dans l'app</button>
+  </div>
+</div>
+
+<!-- ÉCRAN 2: ABONNEMENT TERMINÉ -->
+<div class="box locked hidden" id="lockedBox">
+  <h2>L’ABONNEMENT EST TERMINÉ</h2>
+  <p style="color:#64748b">Renouvelle pour continuer l’accès</p>
   
-  <div class="info-box">
-    ⚠️ <b>Important hors ligne:</b> Connectez-vous 1 fois avec internet avant d'installer l'app. Après installation, vous pouvez vendre sans réseau. Reconnexion = sync auto des ventes.
+  <div class="paiement">
+    <b>Paiement Mobile Money :</b><br><br>
+    TGO 96766875<br>
+    YAS 70346852
   </div>
-
-  <input type="email" id="email" placeholder="Votre email">
-  <button onclick="sendEmailLink()">Recevoir code par email 24h</button>
-  <p style="font-size:12px;text-align:center;color:#666">Firebase envoie le code sur votre email</p>
-  <div id="loginMsg"></div>
-</div>
-
-<div class="container hidden" id="lockedBox">
-  <div class="locked">
-    <h2>L’ABONNEMENT EST TERMINÉ</h2>
-    <p>Faites le paiement pour continuer</p>
-    <div class="num-paiement">TGO : 96766875<br>YAS : 70346852</div>
-    <button class="btn-red" onclick="callOwner()">Appel confirmé</button>
-    <button class="btn-orange" onclick="showCodePopup()">Ouvrir</button>
+  
+  <button class="call-btn" onclick="window.location.href='tel:+22896766875'">Appel confirmé</button>
+  <button id="btnOpen">Ouvrir - J’ai payé</button>
+  
+  <div id="codeLicenceBox" class="hidden">
+    <input type="text" id="codeLicence" placeholder="Entrez votre code GMBXXXX" style="text-transform:uppercase">
+    <button id="btnActivate">Activer 30 jours</button>
   </div>
+  
+  <p class="info">Appelle d’abord, puis clique "Ouvrir" pour entrer ton code</p>
 </div>
-
-<div class="popup hidden" id="codePopup">
-  <div class="popup-content">
-    <h3>Entrez votre code de licence GMBXXXX</h3>
-    <input type="text" id="codeLicence" placeholder="GMBXXXX" style="text-transform:uppercase">
-    <button onclick="verifyCode()">Valider</button>
-    <button onclick="closePopup()" style="background:#95a5a6">Annuler</button>
-    <div id="codeMsg"></div>
-  </div>
-</div>
-
-<script>
-// Enregistrer Service Worker pour mode offline
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').then(reg=>{
-    console.log('SW enregistré:', reg.scope);
-  }).catch(err=>console.log('SW erreur:', err));
-}
-</script>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase/auth.js";
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase/firestore.js";
+import { auth, db } from "./firebaseConfig.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCBYnjsBMJGeR57Kk3FX9zeIplE5EFkcIY",
-  authDomain: "gmb24-raa.firebaseapp.com",
-  projectId: "gmb24-raa",
-  storageBucket: "gmb24-raa.firebasestorage.app",
-  messagingSenderId: "558507911211",
-  appId: "1:558507911211:web:5cdc99c082fe653684626e"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const loginBox = document.getElementById("loginBox");
+const lockedBox = document.getElementById("lockedBox");
+const codeBox = document.getElementById("codeBox");
+const codeLicenceBox = document.getElementById("codeLicenceBox");
+const btnSendCode = document.getElementById("btnSendCode");
 
-const actionCodeSettings = {url: window.location.href, handleCodeInApp: true};
-let currentUser = null;
-
-// Détecte si hors ligne au chargement
-if(!navigator.onLine){
-  document.getElementById('loginMsg').innerHTML = '<div class="msg warning">Pas de connexion. Connectez-vous 1 fois avec internet pour activer l\'app, puis vous pourrez l\'utiliser offline.</div>';
-}
-
-// Vérifie lien Firebase au chargement
-if(isSignInWithEmailLink(auth, window.location.href)){
-  let email = window.localStorage.getItem('emailForSignIn');
-  if(!email) email = prompt('Confirmez votre email');
-  signInWithEmailLink(auth, email, window.location.href).then(async(result)=>{
-    window.localStorage.removeItem('emailForSignIn');
-    currentUser = result.user;
-    await checkLicence(currentUser.uid, currentUser.email);
-  }).catch(err=>alert("Code invalide ou expiré"));
-}
-
-window.sendEmailLink = async function(){
-  const email = document.getElementById('email').value;
-  const msg = document.getElementById('loginMsg');
-  if(!email) return msg.innerHTML = '<div class="msg error">Entrez votre email</div>';
-  if(!navigator.onLine) return msg.innerHTML = '<div class="msg error">Pas de connexion internet. Activez le réseau pour recevoir le code.</div>';
-  
-  try{
-    await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-    window.localStorage.setItem('emailForSignIn', email);
-    msg.innerHTML = '<div class="msg success">Code envoyé sur '+email+'. Vérifiez vos mails/spams.</div>';
-  }catch(e){
-    msg.innerHTML = '<div class="msg error">Erreur: '+e.message+'</div>';
+// Si déjà connecté, vérifie licence direct
+onAuthStateChanged(auth, async (user) => {
+  if(user) {
+    await verifierLicence(user.email);
   }
-}
+});
 
-async function checkLicence(uid, email){
-  const ref = doc(db, "licences", uid);
-  const snap = await getDoc(ref);
-  const now = new Date();
+// 1. ENVOYER LIEN MAGIQUE 24H
+btnSendCode.onclick = async () => {
+  const email = document.getElementById("email").value.trim();
+  if(!email) { alert("Entre ton email"); return; }
+  
+  btnSendCode.disabled = true;
+  btnSendCode.textContent = "Envoi...";
+  
+  const actionCodeSettings = { 
+    url: window.location.href, 
+    handleCodeInApp: true 
+  };
+  
+  try {
+    await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+    window.localStorage.setItem("emailForSignIn", email);
+    codeBox.classList.remove("hidden");
+    btnSendCode.textContent = "Code envoyé ✓";
+  } catch(e) {
+    alert("Erreur: " + e.message);
+    btnSendCode.disabled = false;
+    btnSendCode.textContent = "Recevoir le code par email";
+  }
+};
 
-  if(!snap.exists()){
-    await setDoc(ref, {
+// 2. VÉRIFIER CODE + VÉRIFIER LICENCE
+document.getElementById("btnVerify").onclick = async () => {
+  const code = document.getElementById("code").value.trim();
+  if(!code) { alert("Colle le code reçu par email"); return; }
+  
+  if(isSignInWithEmailLink(auth, window.location.href)) {
+    const email = window.localStorage.getItem("emailForSignIn");
+    try {
+      await signInWithEmailLink(auth, email, window.location.href);
+      window.localStorage.removeItem("emailForSignIn");
+      await verifierLicence(email);
+    } catch(e) {
+      alert("Code invalide ou expiré: " + e.message);
+    }
+  } else {
+    alert("Lien invalide. Demande un nouveau code.");
+  }
+};
+
+// 3. LOGIQUE LICENCE : ESSAI 30J OU VERROUILLÉ
+async function verifierLicence(email) {
+  const userId = btoa(email).replace(/=/g, "");
+  const licRef = doc(db, "licences", userId);
+  const snap = await getDoc(licRef);
+  
+  if(!snap.exists()) {
+    // MOIS 1 GRATUIT
+    const expireAt = new Date();
+    expireAt.setDate(expireAt.getDate() + 30);
+    await setDoc(licRef, {
       email: email,
-      expireAt: new Date(now.getTime() + 30*24*60*60*1000),
+      expireAt: expireAt,
       statut: "essai",
-      codeLicence: null,
+      codeLicence: "",
       createdAt: serverTimestamp()
     });
     window.location.href = "dashboard.html";
   } else {
     const data = snap.data();
-    if(new Date(data.expireAt.toDate()) > now){
+    const now = new Date();
+    const expire = data.expireAt.toDate();
+    
+    if(expire > now) {
+      // Licence active
       window.location.href = "dashboard.html";
     } else {
-      document.getElementById('loginBox').classList.add('hidden');
-      document.getElementById('lockedBox').classList.remove('hidden');
-      currentUser = auth.currentUser;
+      // ABONNEMENT TERMINÉ
+      loginBox.classList.add("hidden");
+      lockedBox.classList.remove("hidden");
     }
   }
 }
 
-window.callOwner = function(){
-  window.location.href = "tel:+22896766875";
-}
+// 4. BOUTON OUVRIR → CHAMP CODE LICENCE
+document.getElementById("btnOpen").onclick = () => {
+  codeLicenceBox.classList.remove("hidden");
+};
 
-window.showCodePopup = function(){
-  document.getElementById('codePopup').classList.remove('hidden');
-}
-
-window.closePopup = function(){
-  document.getElementById('codePopup').classList.add('hidden');
-  document.getElementById('codeMsg').innerHTML = "";
-}
-
-window.verifyCode = async function(){
-  const code = document.getElementById('codeLicence').value.toUpperCase();
-  const msg = document.getElementById('codeMsg');
-  if(!code) return msg.innerHTML = '<div class="msg error">Entrez le code</div>';
-  if(!navigator.onLine) return msg.innerHTML = '<div class="msg error">Connexion internet requise pour valider le code</div>';
-
-  const ref = doc(db, "codesLicence", code);
-  const snap = await getDoc(ref);
-
-  if(!snap.exists() || snap.data().used){
-    msg.innerHTML = '<div class="msg error">Code invalide ou déjà utilisé</div>';
-    return;
+// 5. ACTIVER AVEC CODE GMBXXXX
+document.getElementById("btnActivate").onclick = async () => {
+  const code = document.getElementById("codeLicence").value.trim().toUpperCase();
+  if(!code || !code.startsWith("GMB")) { 
+    alert("Code invalide. Format: GMBXXXX"); 
+    return; 
   }
-
-  const data = snap.data();
-  if(new Date(data.expireAt.toDate()) < new Date()){
-    msg.innerHTML = '<div class="msg error">Code expiré</div>';
-    return;
+  
+  const user = auth.currentUser;
+  if(!user) { alert("Reconnecte-toi"); return; }
+  
+  const userId = btoa(user.email).replace(/=/g, "");
+  
+  try {
+    const codeRef = doc(db, "codesLicence", code);
+    const codeSnap = await getDoc(codeRef);
+    
+    if(!codeSnap.exists()) {
+      alert("Code introuvable");
+      return;
+    }
+    if(codeSnap.data().used === true) {
+      alert("Code déjà utilisé");
+      return;
+    }
+    
+    const newExpire = new Date();
+    newExpire.setDate(newExpire.getDate() + 30);
+    
+    await updateDoc(doc(db, "licences", userId), {
+      expireAt: newExpire,
+      statut: "actif",
+      codeLicence: code
+    });
+    
+    await updateDoc(codeRef, { 
+      used: true, 
+      clientId: userId,
+      usedAt: serverTimestamp()
+    });
+    
+    alert("Abonnement activé 30 jours !");
+    window.location.href = "dashboard.html";
+    
+  } catch(e) {
+    alert("Erreur activation: " + e.message);
   }
-
-  await setDoc(doc(db, "licences", currentUser.uid), {
-    email: currentUser.email,
-    expireAt: new Date(Date.now() + 30*24*60*60*1000),
-    statut: "actif",
-    codeLicence: code,
-    phone: data.phone || null
-  }, {merge: true});
-
-  await updateDoc(ref, {used: true});
-
-  msg.innerHTML = '<div class="msg success">Code validé! Redirection...</div>';
-  setTimeout(()=>window.location.href="dashboard.html", 1500);
-}
+};
 </script>
 </body>
-    </html>
+</html>
