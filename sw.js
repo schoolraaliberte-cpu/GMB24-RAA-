@@ -1,28 +1,25 @@
-const CACHE_NAME = 'gmb24-raa-v1';
-const FILES_TO_CACHE = [
-  'index.html',
-  'dashboard.html',
-  'admin.html',
-  'manifest.json',
-  'icon-192.png',
-  'icon-512.png'
+const CACHE_NAME = "gmb24-v1";
+const FILES = [
+  "/",
+  "/index.html",
+  "/admin.html", 
+  "/dashboard.html",
+  "/firebaseConfig.js"
 ];
 
-self.addEventListener('install', e => {
+self.addEventListener("install", e => {
   e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(FILES_TO_CACHE))
+    caches.open(CACHE_NAME).then(cache => cache.addAll(FILES))
   );
   self.skipWaiting();
 });
 
-self.addEventListener('activate', e => {
+self.addEventListener("activate", e => {
   e.waitUntil(self.clients.claim());
 });
 
-self.addEventListener('fetch', e => {
+self.addEventListener("fetch", e => {
   e.respondWith(
-    caches.match(e.request).then(response => {
-      return response || fetch(e.request);
-    })
+    caches.match(e.request).then(res => res || fetch(e.request))
   );
 });
