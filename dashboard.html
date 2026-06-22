@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GMB24-RAA Dashboard</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3498db">
+<style>
+*{box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#ecf0f1;margin:0;padding:15px}
+.container{max-width:1200px;margin:auto;background:white;padding:25px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.1)}
+h2{color:#2c3e50;margin-top:0}
+.status-bar{padding:10px;text-align:center;font-size:13px;margin-bottom:20px;border-radius:8px;font-weight:bold}
+.online{background:#d4edda;color:#155724;border:1px solid #c3e6cb}
+.offline{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb}
+.syncing{background:#d1ecf1;color:#0c5460;border:1px solid #bee5eb}
+nav{display:flex;gap:8px;margin-bottom:25px;border-bottom:3px solid #3498db;padding-bottom:12px;flex-wrap:wrap}
+nav button{padding:12px 22px;border:none;background:#bdc3c7;cursor:pointer;border-radius:8px;font-weight:bold;transition:0.3s}
+nav button.active{background:#3498db;color:white;transform:translateY(-2px)}
+.section{display:none}
+.section.active{display:block;animation:fadeIn 0.3s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+input,select{padding:12px;margin:6px;border:2px solid #ddd;border-radius:8px;font-size:14px}
+input:focus{border-color:#3498db;outline:none}
+.btn{padding:12px 25px;background:#27ae60;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:bold;font-size:15px;transition:0.3s}
+.btn:hover{background:#219a52;transform:translateY(-2px)}
+.btn-red{background:#e74c3c}.btn-red:hover{background:#c0392b}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:15px 0}
+table{width:100%;border-collapse:collapse;margin-top:20px;font-size:14px;box-shadow:0 2px 5px rgba(0,0,0,0.1)}
+th,td{padding:12px;border:1px solid #ddd;text-align:left}
+th{background:#3498db;color:white;font-weight:bold;position:sticky;top:0}
+tr:nth-child(even){background:#f8f9fa}
+.msg{padding:12px;border-radius:8px;margin:12px 0;font-weight:500}
+.success{background:#d4edda;color:#155724;border:1px solid #c3e6cb}
+.error{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb}
+.warning{background:#fff3cd;color:#856404;border:1px solid #ffeaa7}
+.camera-box{border:3px dashed #3498db;padding:20px;text-align:center;margin:15px 0;border-radius:12px;background:#f8f9fa}
+video,canvas{max-width:100%;border-radius:8px;margin-top:10px;border:2px solid #3498db}
+.phrase{margin-top:35px;padding:18px;background:linear-gradient(135deg,#2c3e50,#34495e);color:#f1c40f;text-align:center;font-weight:bold;font-size:18px;border-radius:10px;letter-spacing:1px}
+.cloture-box{background:#f8f9fa;padding:20px;border-radius:10px;margin-top:15px;border-left:5px solid #3498db}
+.stat-card{display:inline-block;background:white;padding:15px 25px;margin:8px;border-radius:8px;box-shadow:0 2px 5px rgba(0,0,0,0.1);border-top:4px solid #27ae60}
+.stat-card h4{margin:0;font-size:13px;color:#7f8c8d}
+.stat-card p{margin:5px 0 0;font-size:20px;font-weight:bold;color:#2c3e50}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="statusBar" class="status-bar">Chargement...</div>
+  <h2>GMB24-RAA - Gestion Boutique Pro</h2>
+
+  <nav>
+    <button class="active" onclick="showSection('vente')">Vente du jour</button>
+    <button onclick="showSection('parametres')">Paramètres</button>
+    <button onclick="showSection('cloture')">Clôture OTR</button>
+    <button onclick="logout()" class="btn-red">Déconnexion</button>
+  </nav>
+
+  <!-- SECTION VENTE -->
+  <div class="section active" id="vente">
+    <h3>Enregistrer une vente</h3>
+    <div class="grid-3">
+      <input type="date" id="dateVente">
+      <input type="text" id="nomClient" placeholder="Nom client">
+      <input type="text" id="article" placeholder="Article vendu">
+      <input type="number" id="quantite" placeholder="Quantité" min="1" value="1">
+      <input type="number" id="prixTTC" placeholder="Prix TTC FCFA" step="0.01">
+      <input type="number" id="prixHT" placeholder="Prix HT FCFA" step="0.01">
+    </div>
+
+    <div class="camera-box" id="cameraBox">
+      <p style="margin:0 0 10px;font-weight:bold;color:#2c3e50">Photo de profil obligatoire OTR</p>
+      <video id="video" autoplay playsinline class="hidden"></video>
+      <canvas id="canvas" class="hidden"></canvas>
+      <button class="btn" onclick="startCamera()">Activer camera</button>
+      <button class="btn" onclick="takePhoto()">Prendre photo</button>
+    </div>
+
+    <button class="btn" onclick="saveVente()">Enregistrer la vente</button>
+    <div id="venteMsg"></div>
+
+    <h3 style="margin-top:30px">Historique des ventes</h3>
+    <input type="month" id="filterMonth" onchange="loadVentes()" style="max-width:200px">
+    
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Client</th>
+            <th>Article</th>
+            <th>Qté</th>
+            <th>TTC</th>
+            <th>HT</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody id="ventesTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTION PARAMETRES -->
+  <div class="section" id="parametres">
+    <h3>Paramètres boutique OTR</h3>
+    <div class="grid-3">
+      <input type="text" id="nomBoutique" placeholder="Nom boutique">
+      <input type="text" id="gerant" placeholder="Nom gérant">
+      <input type="text" id="ifu" placeholder="IFU">
+      <input type="text" id="cfe" placeholder="CFE">
+      <input type="number" id="tauxOTR" placeholder="Taux OTR %" step="0.01">
+      <input type="number" id="tauxIS" placeholder="IS/IRPP %" step="0.01">
+      <input type="number" id="tva" placeholder="TVA %" step="0.01">
+      <input type="number" id="tvaOTR" placeholder="TVA OTR 1%" step="0.01">
+      <input type="number" id="depImposable" placeholder="Dépenses imposables">
+      <input type="number" id="depNonImposable" placeholder="Dépenses non imposables">
+    </div>
+    <button class="btn" onclick="saveParams()">Enregistrer paramètres</button>
+    <div id="paramMsg"></div>
+    <div class="phrase">LA CONFIANCE à GMB24-RAA pour une meilleure gestion</div>
+  </div>
+
+  <!-- SECTION CLOTURE -->
+  <div class="section" id="cloture">
+    <h3>Clôture mensuelle OTR</h3>
+    <input type="month" id="clotureMonth" onchange="calcCloture()" style="max-width:200px">
+    <p style="font-size:13px;color:#666">Sans internet: calcul local. Avec internet: calcul exact Firebase + sync.</p>
+    
+    <div id="clotureResult" class="cloture-box">
+      <p>Sélectionne un mois pour calculer</p>
+    </div>
+    
+    <button class="btn" onclick="generatePDF()">Télécharger PDF OTR avec signatures</button>
+  </div>
+</div>
+
+<script>
+// Service Worker pour PWA offline
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    console.log('SW actif:', reg.scope);
+  }).catch(err=>console.error('SW erreur:', err));
+}
+
+// Gestion statut réseau
+function updateStatus(syncing=false){
+  const bar = document.getElementById('statusBar');
+  if(syncing){
+    bar.className = 'status-bar syncing';
+    bar.textContent = 'Sync en cours... Envoi des ventes locales';
+    return;
+  }
+  if(navigator.onLine){
+    bar.className = 'status-bar online';
+    bar.textContent = 'Connecté - Sync auto activé';
+    syncData();
+  } else {
+    bar.className = 'status-bar offline';
+    bar.textContent = 'Mode hors ligne - Ventes sauvées localement';
+  }
+}
+window.addEventListener('online', ()=>updateStatus());
+window.addEventListener('offline', ()=>updateStatus());
+updateStatus();
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@7/+esm';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCBYnjsBMJGeR57Kk3FX9zeIplE5EFkcIY",
+  authDomain: "gmb24-raa.firebaseapp.com",
+  projectId: "gmb24-raa",
+  storageBucket: "gmb24-raa.firebasestorage.app",
+  messagingSenderId: "558507911211",
+  appId: "1:558507911211:web:5cdc99c082fe653684626e"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+let stream = null;
+let photoData = null;
+
+const dbPromise = openDB('gmb24-db', 2, {
+  upgrade(db) {
+    if(!db.objectStoreNames.contains('ventes')) db.createObjectStore('ventes', {keyPath: 'id', autoIncrement: true});
+    if(!db.objectStoreNames.contains('syncQueue')) db.createObjectStore('syncQueue', {keyPath: 'id', autoIncrement: true});
+    if(!db.objectStoreNames.contains('parametres')) db.createObjectStore('parametres', {keyPath: 'uid'});
+  }
+});
+
+onAuthStateChanged(auth, async user=>{
+  if(!user) return window.location.href = "index.html";
+  currentUser = user;
+  const today = new Date().toISOString().slice(0,10);
+  const month = today.slice(0,7);
+  document.getElementById('dateVente').value = today;
+  document.getElementById('filterMonth').value = month;
+  document.getElementById('clotureMonth').value = month;
+  await checkLicenceAndLoad();
+});
+
+async function checkLicenceAndLoad(){
+  try{
+    const ref = doc(db, "licences", currentUser.uid);
+    const snap = await getDoc(ref);
+    if(!snap.exists() || new Date(snap.data().expireAt.toDate()) < new Date()){
+      alert("Licence expirée. Redirection connexion.");
+      window.location.href = "index.html";
+      return;
+    }
+    loadVentes();
+    loadParams();
+    calcCloture();
+  }catch(e){
+    console.log("Mode offline licence locale");
+    loadVentes();
+    loadParams();
+  }
+}
+
+window.showSection = function(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+window.startCamera = async function(){
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
+    document.getElementById('video').srcObject = stream;
+    document.getElementById('video').classList.remove('hidden');
+  }catch(e){
+    alert("Camera bloquée. Autorise l'accès dans ton navigateur.");
+  }
+}
+
+window.takePhoto = function(){
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  if(!video.srcObject) return alert("Active la camera d'abord");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video,0,0);
+  photoData = canvas.toDataURL('image/jpeg',0.8);
+  canvas.classList.remove('hidden');
+  stream.getTracks().forEach(t=>t.stop());
+}
+
+window.saveVente = async function(){
+  const msg = document.getElementById('venteMsg');
+  if(!photoData) return msg.innerHTML = '<div class="msg error">Photo de profil obligatoire OTR</div>';
+
+  const vente = {
+    uid: currentUser.uid,
+    date: document.getElementById('dateVente').value,
+    client: document.getElementById('nomClient').value,
+    article: document.getElementById('article').value,
+    quantite: Number(document.getElementById('quantite').value),
+    prixTTC: Number(document.getElementById('prixTTC').value),
+    prixHT: Number(document.getElementById('prixHT').value),
+    photoProfil: photoData,
+    createdAt: new Date().toISOString(),
+    synced: navigator.onLine
+  };
+
+  const idb = await dbPromise;
+  
+  if(navigator.onLine){
+    try{
+      await addDoc(collection(db, "ventes"), vente);
+      msg.innerHTML = '<div class="msg success">Vente enregistrée sur Firebase</div>';
+    }catch(e){
+      await idb.add('ventes', vente);
+      await idb.add('syncQueue', {data: vente, type: 'addVente'});
+      msg.innerHTML = '<div class="msg warning">Erreur réseau. Vente sauvée localement</div>';
+    }
+  } else {
+    await idb.add('ventes', vente);
+    await idb.add('syncQueue', {data: vente, type: 'addVente'});
+    msg.innerHTML = '<div class="msg success">Vente sauvée hors ligne. Sync à la reconnexion.</div>';
+  }
+  
+  photoData = null;
+  document.getElementById('canvas').classList.add('hidden');
+  document.getElementById('nomClient').value = "";
+  document.getElementById('article').value = "";
+  document.getElementById('quantite').value = "1";
+  document.getElementById('prixTTC').value = "";
+  document.getElementById('prixHT').value = "";
+  loadVentes();
+}
+
+window.syncData = async function(){
+  if(!navigator.onLine || !currentUser) return;
+  const idb = await dbPromise;
+  const queue = await idb.getAll('syncQueue');
+  if(queue.length === 0) return;
+  
+  updateStatus(true);
+  let synced = 0;
+  
+  for(let item of queue){
+    try{
+      if(item.type === 'addVente'){
+        await addDoc(collection(db, "ventes"), {...item.data, synced: true});
+        await idb.delete('syncQueue', item.id);
+        synced++;
+      }
+    }catch(e){console.log("Sync erreur:", e)}
+  }
+  
+  if(synced > 0){
+    document.getElementById('venteMsg').innerHTML = `<div class="msg success">${synced} vente(s) synchronisée(s) sur Firebase</div>`;
+    loadVentes();
+  }
+  updateStatus();
+}
+
+async function loadVentes(){
+  const month = document.getElementById('filterMonth').value;
+  const tbody = document.getElementById('ventesTable');
+  tbody.innerHTML = "<tr><td colspan='7'>Chargement...</td></tr>";
+  
+  const idb = await dbPromise;
+  let ventes = [];
+  
+  if(navigator.onLine){
+    try{
+      const q = query(collection(db,"ventes"), where("uid","==",currentUser.uid), where("date",">=",month+"-01"), where("date","<=",month+"-31"));
+      const snap = await getDocs(q);
+      snap.forEach(d=>ventes.push(d.data()));
+    }catch(e){
+      ventes = await idb.getAll('ventes');
+      ventes = ventes.filter(v=>v.uid===currentUser.uid && v.date>=month+"-01" && v.date<=month+"-31");
+    }
+  } else {
+    ventes = await idb.getAll('ventes');
+    ventes = ventes.filter(v=>v.uid===currentUser.uid && v.date>=month+"-01" && v.date<=month+"-31");
+  }
+  
+  if(ventes.length === 0){
+    tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;color:#999'>Aucune vente ce mois</td></tr>";
+    return;
+  }
+  
+  ventes.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  tbody.innerHTML = "";
+  ventes.forEach(v=>{
+    const statut = v.synced ? 'Sync Firebase' : 'Local';
+    const color = v.synced ? '#27ae60' : '#f39c12';
+    tbody.innerHTML += `<tr>
+      <td>${v.date}</td>
+      <td>${v.client||'-'}</td>
+      <td>${v.article||'-'}</td>
+      <td>${v.quantite}</td>
+      <td>${v.prixTTC.toFixed(2)}</td>
+      <td>${v.prixHT.toFixed(2)}</td>
+      <td style="color:${color};font-weight:bold">${statut}</td>
+    </tr>`;
+  });
+}
+
+async function loadParams(){
+  const idb = await dbPromise;
+  let p = null;
+  
+  if(navigator.onLine){
+    try{
+      const snap = await getDoc(doc(db,"parametres",currentUser.uid));
+      if(snap.exists()){
+        p = snap.data();
+        await idb.put('parametres', {...p, uid: currentUser.uid});
+      }
+    }catch(e){
+      p = await idb.get('parametres', currentUser.uid);
+    }
+  } else {
+    p = await idb.get('parametres', currentUser.uid);
+  }
+  
+  if(p){
+    Object.keys(p).forEach(k=>{
+      if(document.getElementById(k)) document.getElementById(k).value = p[k]||'';
+    });
+  }
+}
+
+window.saveParams = async function(){
+  const data = {
+    uid: currentUser.uid,
+    nomBoutique: document.getElementById('nomBoutique').value,
+    gerant: document.getElementById('gerant').value,
+    ifu: document.getElementById('ifu').value,
+    cfe: document.getElementById('cfe').value,
+    tauxOTR: Number(document.getElementById('tauxOTR').value)||0,
+    tauxIS: Number(document.getElementById('tauxIS').value)||0,
+    tva: Number(document.getElementById('tva').value)||0,
+    tvaOTR: Number(document.getElementById('tvaOTR').value)||0,
+    depImposable: Number(document.getElementById('depImposable').value)||0,
+    depNonImposable: Number(document.getElementById('depNonImposable').value)||0,
+    updatedAt: new Date().toISOString()
+  };
+  
+  const idb = await dbPromise;
+  await idb.put('parametres', data);
+  
+  if(navigator.onLine){
+    try{
+      await setDoc(doc(db,"parametres",currentUser.uid), data);
+      document.getElementById('paramMsg').innerHTML = '<div class="msg success">Paramètres sauvés sur Firebase</div>';
+    }catch(e){
+      document.getElementById('paramMsg').innerHTML = '<div class="msg warning">Sauvés localement. Sync à la reconnexion.</div>';
+    }
+  } else {
+    document.getElementById('paramMsg').innerHTML = '<div class="msg warning">Paramètres sauvés localement. Sync à la reconnexion.</div>';
+  }
+}
+
+window.calcCloture = async function(){
+  const month = document.getElementById('clotureMonth').value;
+  const idb = await dbPromise;
+  let ventes = [];
+  
+  if(navigator.onLine){
+    try{
+      const q = query(collection(db,"ventes"), where("uid","==",currentUser.uid), where("date",">=",month+"-01"), where("date","<=",month+"-31"));
+      const snap = await getDocs(q);
+      snap.forEach(d=>ventes.push(d.data()));
+    }catch(e){
+      ventes = await idb.getAll('ventes');
+      ventes = ventes.filter(v=>v.uid===currentUser.uid && v.date>=month+"-01" && v.date<=month+"-31");
+    }
+  } else {
+    ventes = await idb.getAll('ventes');
+    ventes = ventes.filter(v=>v.uid===currentUser.uid && v.date>=month+"-01" && v.date<=month+"-31");
+  }
+  
+  let totalTTC = 0, totalHT = 0;
+  const articles = {};
+  ventes.forEach(v=>{
+    totalTTC += v.prixTTC * v.quantite;
+    totalHT += v.prixHT * v.quantite;
+    articles[v.article] = (articles[v.article]||0) + v.quantite;
+  });
+  
+  const param = await idb.get('parametres', currentUser.uid);
+  const tauxOTR = param?.tauxOTR || 0;
+  const tauxIS = param?.tauxIS || 0;
+  const depImpo = param?.depImposable || 0;
+  const depNonImpo = param?.depNonImposable || 0;
+  
+  const otr = totalHT * tauxOTR / 100;
+  const benefice = totalHT - depImpo - depNonImpo;
+  const is = benefice > 0 ? benefice * tauxIS / 100 : 0;
+
+  let html = `
+    <div class="stat-card"><h4>Total TTC</h4><p>${totalTTC.toFixed(0)} FCFA</p></div>
+    <div class="stat-card"><h4>Total HT</h4><p>${totalHT.toFixed(0)} FCFA</p></div>
+    <div class="stat-card"><h4>OTR ${tauxOTR}%</h4><p>${otr.toFixed(0)} FCFA</p></div>
+    <div class="stat-card"><h4>Bénéfice</h4><p>${benefice.toFixed(0)} FCFA</p></div>
+    <div class="stat-card"><h4>IS ${tauxIS}%</h4><p>${is.toFixed(0)} FCFA</p></div>
+    
+    <h4 style="margin-top:25px">Inventaire par article</h4>
+    <table><thead><tr><th>Article</th><th>Qté vendue</th></tr></thead><tbody>`;
+  
+  Object.keys(articles).sort().forEach(a=> 
+    html += `<tr><td>${a}</td><td>${articles[a]} unités</td></tr>`
+  );
+  
+  html += `</tbody></table>`;
+  
+  if(!navigator.onLine){
+    html += '<p style="color:#f39c12;font-size:13px;margin-top:15px">Calcul local. Reconnexion pour calcul exact Firebase.</p>';
+  }
+  document.getElementById('clotureResult').innerHTML = html;
+}
+
+window.generatePDF = function(){
+  alert("PDF OTR avec 2 signatures à générer. Intégration jsPDF prochaine étape.");
+}
+
+window.logout = function(){
+  signOut(auth);
+  window.location.href = "index.html";
+}
+</script>
+</body>
+  </html>
