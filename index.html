@@ -11,19 +11,19 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#f0f2f5; margin:0; padding:20px}
 .box{background:white; padding:35px; border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.08); width:100%; max-width:360px}
 h2{text-align:center; color:#1e293b; margin:0 0 25px 0; font-size:24px}
-input{width:100%; padding:14px; margin:10px 0; border:1px solid #cbd5e1; border-radius:8px; font-size:15px; outline:none; transition:border 0.2s}
+input{width:100%; padding:14px; margin:10px 0; border:1px solid #cbd5e1; border-radius:8px; font-size:15px; outline:none}
 input:focus{border-color:#2563eb}
-button{width:100%; padding:14px; background:#2563eb; color:white; border:none; border-radius:8px; cursor:pointer; margin-top:12px; font-weight:600; font-size:15px; transition:background 0.2s}
+button{width:100%; padding:14px; background:#2563eb; color:white; border:none; border-radius:8px; cursor:pointer; margin-top:12px; font-weight:600; font-size:15px}
 button:hover{background:#1d4ed8}
 button:disabled{background:#94a3b8; cursor:not-allowed}
 .hidden{display:none}
 .locked{text-align:center}
 .locked h2{color:#dc2626; font-size:22px}
 .paiement{background:#fef3c7; padding:18px; border-radius:10px; margin:20px 0; border-left:4px solid #f59e0b; text-align:left}
-.paiement b{font-size:16px}
 .call-btn{background:#16a34a; margin-top:8px}
 .call-btn:hover{background:#15803d}
 .info{font-size:13px; color:#64748b; text-align:center; margin-top:15px}
+.error{color:#dc2626; font-size:13px; margin-top:8px; display:none}
 </style>
 </head>
 <body>
@@ -36,6 +36,7 @@ button:disabled{background:#94a3b8; cursor:not-allowed}
     <p class="info">Code envoyé. Vérifie ta boîte + spams</p>
     <input type="text" id="code" placeholder="Colle le code ici">
     <button id="btnVerify">Entrer dans l'app</button>
+    <p class="error" id="errorMsg"></p>
   </div>
 </div>
 
@@ -52,6 +53,7 @@ button:disabled{background:#94a3b8; cursor:not-allowed}
   <div id="codeLicenceBox" class="hidden">
     <input type="text" id="codeLicence" placeholder="Entrez votre code GMBXXXX" style="text-transform:uppercase">
     <button id="btnActivate">Activer 30 jours</button>
+    <p class="error" id="errorLicence"></p>
   </div>
   <p class="info">Appelle d’abord, puis clique "Ouvrir" pour entrer ton code</p>
 </div>
@@ -66,6 +68,8 @@ const lockedBox = document.getElementById("lockedBox");
 const codeBox = document.getElementById("codeBox");
 const codeLicenceBox = document.getElementById("codeLicenceBox");
 const btnSendCode = document.getElementById("btnSendCode");
+const errorMsg = document.getElementById("errorMsg");
+const errorLicence = document.getElementById("errorLicence");
 
 if('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');
@@ -82,14 +86,15 @@ btnSendCode.onclick = async () => {
   if(!email) { alert("Entre ton email"); return; }
   btnSendCode.disabled = true;
   btnSendCode.textContent = "Envoi...";
-  const actionCodeSettings = { url: window.location.href, handleCodeInApp: true };
+  const actionCodeSettings = { url: window.location.origin + "/index.html", handleCodeInApp: true };
   try {
     await sendSignInLinkToEmail(auth, email, actionCodeSettings);
     window.localStorage.setItem("emailForSignIn", email);
     codeBox.classList.remove("hidden");
     btnSendCode.textContent = "Code envoyé ✓";
   } catch(e) {
-    alert("Erreur: " + e.message);
+    errorMsg.textContent = "Erreur: " + e.message;
+    errorMsg.style.display = "block";
     btnSendCode.disabled = false;
     btnSendCode.textContent = "Recevoir le code par email";
   }
@@ -97,7 +102,7 @@ btnSendCode.onclick = async () => {
 
 document.getElementById("btnVerify").onclick = async () => {
   const code = document.getElementById("code").value.trim();
-  if(!code) { alert("Colle le code reçu par email"); return; }
+  if(!code) { errorMsg.textContent = "Colle le code reçu par email"; errorMsg.style.display = "block"; return; }
   if(isSignInWithEmailLink(auth, window.location.href)) {
     const email = window.localStorage.getItem("emailForSignIn");
     try {
@@ -105,10 +110,12 @@ document.getElementById("btnVerify").onclick = async () => {
       window.localStorage.removeItem("emailForSignIn");
       await verifierLicence(email);
     } catch(e) {
-      alert("Code invalide ou expiré: " + e.message);
+      errorMsg.textContent = "Code invalide ou expiré";
+      errorMsg.style.display = "block";
     }
   } else {
-    alert("Lien invalide. Demande un nouveau code.");
+    errorMsg.textContent = "Lien invalide. Demande un nouveau code.";
+    errorMsg.style.display = "block";
   }
 };
 
@@ -146,15 +153,15 @@ document.getElementById("btnOpen").onclick = () => {
 
 document.getElementById("btnActivate").onclick = async () => {
   const code = document.getElementById("codeLicence").value.trim().toUpperCase();
-  if(!code || !code.startsWith("GMB")) { alert("Code invalide. Format: GMBXXXX"); return; }
+  if(!code ||!code.startsWith("GMB")) { errorLicence.textContent = "Code invalide. Format: GMBXXXX"; errorLicence.style.display = "block"; return; }
   const user = auth.currentUser;
-  if(!user) { alert("Reconnecte-toi"); return; }
+  if(!user) { errorLicence.textContent = "Reconnecte-toi"; errorLicence.style.display = "block"; return; }
   const userId = btoa(user.email).replace(/=/g, "");
   try {
     const codeRef = doc(db, "codesLicence", code);
     const codeSnap = await getDoc(codeRef);
-    if(!codeSnap.exists()) { alert("Code introuvable"); return; }
-    if(codeSnap.data().used === true) { alert("Code déjà utilisé"); return; }
+    if(!codeSnap.exists()) { errorLicence.textContent = "Code introuvable"; errorLicence.style.display = "block"; return; }
+    if(codeSnap.data().used === true) { errorLicence.textContent = "Code déjà utilisé"; errorLicence.style.display = "block"; return; }
     const newExpire = new Date();
     newExpire.setDate(newExpire.getDate() + 30);
     await updateDoc(doc(db, "licences", userId), {
@@ -163,12 +170,13 @@ document.getElementById("btnActivate").onclick = async () => {
       codeLicence: code
     });
     await updateDoc(codeRef, { used: true, clientId: userId, usedAt: serverTimestamp() });
-    alert("Abonnement activé 30 jours !");
+    alert("Abonnement activé 30 jours!");
     window.location.href = "dashboard.html";
   } catch(e) {
-    alert("Erreur activation: " + e.message);
+    errorLicence.textContent = "Erreur activation: " + e.message;
+    errorLicence.style.display = "block";
   }
 };
 </script>
 </body>
-    </html>
+  </html>
