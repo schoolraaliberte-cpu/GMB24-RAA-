@@ -9,6 +9,7 @@
 <style>
 *{box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial; background:#f8fafc; margin:0; padding:20px}
+.hidden{display:none}
 .header{display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; flex-wrap:wrap; gap:10px}
 h1{color:#1e293b; margin:0; font-size:22px}
 .btn-logout{padding:10px 18px; background:#dc2626; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600}
@@ -24,126 +25,170 @@ input:focus{border-color:#2563eb}
 .success{background:#d1fae5; color:#065f46; padding:12px; border-radius:8px; margin-bottom:15px; display:none}
 .info{font-size:13px; color:#64748b; text-align:center; margin-top:15px}
 .date-today{color:#2563eb; font-weight:600}
+.compteur{font-size:13px; color:#2563eb; font-weight:600}
+
+/* Style écran blocage */
+.box-block{background:white; padding:35px; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,0.08); width:100%; max-width:380px; margin:100px auto; text-align:center}
+.box-block h2{color:#dc2626; font-size:22px; margin:0 0 15px 0}
+.paiement{background:#fef3c7; padding:20px; border-radius:10px; margin:20px 0; border-left:4px solid #f59e0b; text-align:center}
+.numero{font-size:26px; font-weight:bold; letter-spacing:1px; color:#b45309; margin:8px 0}
+.btn-moov{width:100%; padding:15px; background:#FF6B00; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:16px; margin-top:10px}
+.btn-moov:hover{background:#e55f00}
+.btn-call{width:100%; padding:15px; background:#16a34a; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:16px; margin-top:8px}
+.btn-call:hover{background:#15803d}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>GMB24-RAA</h1>
-  <button class="btn-logout" id="btnLogout">Déconnexion</button>
+<!-- 1. ÉCRAN APP - VENTE DU JOUR -->
+<div id="appScreen" class="hidden">
+  <div class="header">
+    <div>
+      <h1>GMB24-RAA</h1>
+      <div class="compteur" id="compteurJours"></div>
+    </div>
+    <button class="btn-logout" id="btnLogout">Réinitialiser essai</button>
+  </div>
+
+  <div class="card">
+    <h2>Vente du jour : <span class="date-today" id="dateToday"></span></h2>
+    <div class="success" id="msgSuccess">Vente enregistrée ✓</div>
+    <div class="form-group">
+      <label>Montant ventes TGO</label>
+      <input type="number" id="venteTGO" placeholder="0" min="0" inputmode="numeric">
+    </div>
+    <div class="form-group">
+      <label>Montant ventes YAS</label>
+      <input type="number" id="venteYAS" placeholder="0" min="0" inputmode="numeric">
+    </div>
+    <div class="form-group">
+      <label>Nombre de transactions</label>
+      <input type="number" id="nbTransactions" placeholder="0" min="0" inputmode="numeric">
+    </div>
+    <div class="form-group">
+      <label>Commentaire</label>
+      <input type="text" id="commentaire" placeholder="Optionnel" maxlength="200">
+    </div>
+    <button class="btn-save" id="btnSave">Enregistrer la vente</button>
+    <p class="info">Une seule saisie par jour. Modifiable jusqu’à 23h59</p>
+  </div>
 </div>
 
-<div class="card">
-  <h2>Vente du jour : <span class="date-today" id="dateToday"></span></h2>
-  <div class="success" id="msgSuccess">Vente enregistrée ✓</div>
-  <div class="form-group">
-    <label>Montant ventes TGO</label>
-    <input type="number" id="venteTGO" placeholder="0" min="0" inputmode="numeric">
+<!-- 2. ÉCRAN BLOCAGE - ABONNEMENT -->
+<div id="lockedScreen" class="hidden">
+  <div class="box-block">
+    <h2>ESSAI GRATUIT TERMINÉ</h2>
+    <p style="color:#64748b">Renouvelle pour continuer l’accès</p>
+    <div class="paiement">
+      <b>Paiement Mobile Money 2000 FCFA/mois :</b>
+      <div class="numero">Moov: +22896766875</div>
+      <div class="numero">TMoney: +22870346852</div>
+    </div>
+    <button class="btn-moov" onclick="copierNumero('+22896766875')">Copier numéro Moov</button>
+    <button class="btn-call" onclick="window.location.href='tel:+22870346852'">Appeler 70346852 pour confirmer</button>
+    <p class="info">Après paiement, écris-nous sur WhatsApp pour débloquer</p>
   </div>
-  <div class="form-group">
-    <label>Montant ventes YAS</label>
-    <input type="number" id="venteYAS" placeholder="0" min="0" inputmode="numeric">
-  </div>
-  <div class="form-group">
-    <label>Nombre de transactions</label>
-    <input type="number" id="nbTransactions" placeholder="0" min="0" inputmode="numeric">
-  </div>
-  <div class="form-group">
-    <label>Commentaire</label>
-    <input type="text" id="commentaire" placeholder="Optionnel" maxlength="200">
-  </div>
-  <button class="btn-save" id="btnSave">Enregistrer la vente</button>
-  <p class="info">Une seule saisie par jour. Modifiable jusqu’à 23h59</p>
 </div>
 
-<script type="module">
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase/auth.js";
-import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase/firestore.js";
-import { auth, db } from "./firebaseConfig.js";
-
-let userId = "";
+<script>
 const today = new Date().toISOString().split('T')[0];
 document.getElementById("dateToday").textContent = new Date().toLocaleDateString("fr-FR");
 
-if('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js');
+// 1. VÉRIFICATION ESSAI 30 JOURS
+function checkEssaiGratuit() {
+  const AUJOURDHUI = new Date();
+  let dateInstall = localStorage.getItem('date_install_gmb24');
+
+  if(!dateInstall) {
+    localStorage.setItem('date_install_gmb24', AUJOURDHUI.toISOString());
+    dateInstall = AUJOURDHUI.toISOString();
+  }
+
+  const dateDebut = new Date(dateInstall);
+  const joursPasses = Math.floor((AUJOURDHUI - dateDebut) / (1000 * 60 * 60 * 24));
+  const joursRestants = 30 - joursPasses;
+
+  if(joursPasses >= 30) {
+    document.getElementById('appScreen').classList.add('hidden');
+    document.getElementById('lockedScreen').classList.remove('hidden');
+    return false;
+  } else {
+    document.getElementById('compteurJours').innerText = `Essai: ${joursRestants} jour(s) restant(s)`;
+    document.getElementById('appScreen').classList.remove('hidden');
+    chargerVenteDuJour();
+    return true;
+  }
 }
 
-onAuthStateChanged(auth, async (user) => {
-  if(!user) {
-    window.location.href = "index.html";
-    return;
-  }
-  userId = btoa(user.email).replace(/=/g, "");
-  await verifierLicence(user.email);
-  await chargerVenteDuJour();
-});
-
-async function verifierLicence(email) {
-  const licRef = doc(db, "licences", userId);
-  const snap = await getDoc(licRef);
-  if(!snap.exists()) {
-    window.location.href = "index.html";
-    return;
-  }
-  const expire = snap.data().expireAt.toDate();
-  if(expire <= new Date()) {
-    window.location.href = "index.html";
-  }
-}
-
-async function chargerVenteDuJour() {
-  const venteRef = doc(db, "ventes", userId, "jours", today);
-  const snap = await getDoc(venteRef);
-  if(snap.exists()) {
-    const data = snap.data();
-    document.getElementById("venteTGO").value = data.venteTGO || 0;
-    document.getElementById("venteYAS").value = data.venteYAS || 0;
-    document.getElementById("nbTransactions").value = data.nbTransactions || 0;
-    document.getElementById("commentaire").value = data.commentaire || "";
+// 2. SAUVEGARDE VENTE EN LOCAL
+function chargerVenteDuJour() {
+  const data = localStorage.getItem('vente_' + today);
+  if(data) {
+    const vente = JSON.parse(data);
+    document.getElementById("venteTGO").value = vente.venteTGO || 0;
+    document.getElementById("venteYAS").value = vente.venteYAS || 0;
+    document.getElementById("nbTransactions").value = vente.nbTransactions || 0;
+    document.getElementById("commentaire").value = vente.commentaire || "";
     document.getElementById("msgSuccess").style.display = "block";
     document.getElementById("msgSuccess").textContent = "Vente déjà enregistrée - Modifiable";
   }
 }
 
-document.getElementById("btnSave").onclick = async () => {
+document.getElementById("btnSave").onclick = () => {
   const btn = document.getElementById("btnSave");
   btn.disabled = true;
   btn.textContent = "Enregistrement...";
+
   const venteTGO = parseFloat(document.getElementById("venteTGO").value) || 0;
   const venteYAS = parseFloat(document.getElementById("venteYAS").value) || 0;
   const nbTransactions = parseInt(document.getElementById("nbTransactions").value) || 0;
   const commentaire = document.getElementById("commentaire").value.trim();
   const total = venteTGO + venteYAS;
-  try {
-    const venteRef = doc(db, "ventes", userId, "jours", today);
-    await setDoc(venteRef, {
-      email: auth.currentUser.email,
-      date: today,
-      venteTGO: venteTGO,
-      venteYAS: venteYAS,
-      nbTransactions: nbTransactions,
-      total: total,
-      commentaire: commentaire,
-      timestamp: serverTimestamp()
-    });
-    const msg = document.getElementById("msgSuccess");
-    msg.style.display = "block";
-    msg.textContent = `Vente enregistrée ✓ Total: ${total.toLocaleString()} FCFA`;
-    setTimeout(() => {
-      msg.textContent = "Vente déjà enregistrée - Modifiable";
-    }, 3000);
-  } catch(e) {
-    alert("Erreur: " + e.message);
-  }
+
+  const venteData = {
+    date: today,
+    venteTGO: venteTGO,
+    venteYAS: venteYAS,
+    nbTransactions: nbTransactions,
+    total: total,
+    commentaire: commentaire,
+    timestamp: new Date().toISOString()
+  };
+
+  localStorage.setItem('vente_' + today, JSON.stringify(venteData));
+
+  const msg = document.getElementById("msgSuccess");
+  msg.style.display = "block";
+  msg.textContent = `Vente enregistrée ✓ Total: ${total.toLocaleString()} FCFA`;
+  setTimeout(() => {
+    msg.textContent = "Vente déjà enregistrée - Modifiable";
+  }, 3000);
+
   btn.disabled = false;
   btn.textContent = "Enregistrer la vente";
 };
 
-document.getElementById("btnLogout").onclick = async () => {
-  await signOut(auth);
-  window.location.href = "index.html";
+// 3. RÉINITIALISER ESSAI - pour test ou si client paye
+document.getElementById("btnLogout").onclick = () => {
+  if(confirm("Réinitialiser l'essai gratuit? Utilise ça seulement si le client a payé.")) {
+    localStorage.removeItem('date_install_gmb24');
+    location.reload();
+  }
 };
+
+// 4. COPIER NUMERO
+function copierNumero(num) {
+  navigator.clipboard.writeText(num);
+  alert('Numéro ' + num + ' copié!\n\nÉtapes:\n1. *555# Moov ou *145# TMoney\n2. Transfert d\'argent\n3. Colle le numéro\n4. Montant: 2000 FCFA');
+}
+
+// 5. DÉMARRAGE
+checkEssaiGratuit();
+
+// 6. PWA
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
 </script>
 </body>
-    </html>
+      </html>
