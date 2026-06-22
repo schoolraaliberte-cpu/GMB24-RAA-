@@ -1,15 +1,23 @@
 {
-  "name": "GMB24-RAA",
+  "name": "GMB24-RAA Entreprise",
   "short_name": "GMB24",
-  "description": "Gestion ventes + Licences GMB24-RAA",
-  "start_url": "/index.html",
+  "description": "Gestion boutique - TVA + Impôt + Bénéfice OTR",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#2563eb",
+  "background_color": "#f8fafc",
   "theme_color": "#2563eb",
   "orientation": "portrait",
-  "scope": "/",
   "icons": [
-    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
-    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"}
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%232563eb' width='512' height='512' rx='100'/><text x='256' y='300' font-size='180' font-weight='bold' fill='white' text-anchor='middle' font-family='Arial'>G24</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%232563eb' width='192' height='192' rx='40'/><text x='96' y='120' font-size='70' font-weight='bold' fill='white' text-anchor='middle' font-family='Arial'>G24</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
   ]
 }
