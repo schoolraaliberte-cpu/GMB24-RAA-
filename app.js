@@ -9,8 +9,7 @@ const state = {
   profile: null,
   settings: null,
   sales: [],
-  admin: false,
-  ready: false
+  admin: false
 };
 
 const uid = () => state.user?.uid || null;
@@ -193,8 +192,6 @@ async function bootUser(user) {
   state.admin = state.profile?.role === 'admin';
 
   if (state.admin) await refreshAdminCounts();
-  state.ready = true;
-  refs.loginMsg.textContent = '';
   render();
 }
 
@@ -301,7 +298,6 @@ onAuthStateChanged(auth, async user => {
     state.settings = null;
     state.sales = [];
     state.admin = false;
-    state.ready = true;
     render();
   }
 });
