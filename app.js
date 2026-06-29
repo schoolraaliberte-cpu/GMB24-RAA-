@@ -9,7 +9,8 @@ const state = {
   profile: null,
   settings: null,
   sales: [],
-  admin: false
+  admin: false,
+  ready: false
 };
 
 const uid = () => state.user?.uid || null;
@@ -154,10 +155,12 @@ function render() {
   refs.monthlyExpenses.textContent = fmt(c.expenses);
   refs.monthlyTax.textContent = fmt(c.tax);
 
-  refs.taxRegime.value = state.settings?.taxRegime || 'reel_sans_tva';
-  refs.vatEnabled.value = String(!!state.settings?.vatEnabled);
-  refs.vatRate.value = Number(state.settings?.vatRate || 0);
-  refs.taxRate.value = Number(state.settings?.taxRate || 0);
+  if (state.settings) {
+    refs.taxRegime.value = state.settings.taxRegime || 'reel_sans_tva';
+    refs.vatEnabled.value = String(!!state.settings.vatEnabled);
+    refs.vatRate.value = Number(state.settings.vatRate || 0);
+    refs.taxRate.value = Number(state.settings.taxRate || 0);
+  }
 
   refs.homeView.classList.toggle('hidden', !state.user);
   refs.loginView.classList.toggle('hidden', !!state.user);
@@ -190,6 +193,8 @@ async function bootUser(user) {
   state.admin = state.profile?.role === 'admin';
 
   if (state.admin) await refreshAdminCounts();
+  state.ready = true;
+  refs.loginMsg.textContent = '';
   render();
 }
 
@@ -205,7 +210,9 @@ refs.loginForm.addEventListener('submit', async (e) => {
   }
 });
 
-refs.logoutBtn.addEventListener('click', () => signOut(auth));
+refs.logoutBtn.addEventListener('click', async () => {
+  await signOut(auth);
+});
 
 refs.saveSettingsBtn.addEventListener('click', async () => {
   if (!uid()) return;
@@ -286,12 +293,15 @@ if ('serviceWorker' in navigator) {
 }
 
 onAuthStateChanged(auth, async user => {
-  if (user) await bootUser(user);
-  else {
+  if (user) {
+    await bootUser(user);
+  } else {
     state.user = null;
     state.profile = null;
     state.settings = null;
     state.sales = [];
+    state.admin = false;
+    state.ready = true;
     render();
   }
 });
