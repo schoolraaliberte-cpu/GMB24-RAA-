@@ -91,4 +91,4 @@ label{display:block;font-size:14px;color:var(--muted)}
 @media (max-width:900px){
   .stats,.two{grid-template-columns:1fr}
   .hero{flex-direction:column;align-items:flex-start}
-}
+  }
