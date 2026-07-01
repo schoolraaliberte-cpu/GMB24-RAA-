@@ -1,8 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCBYnjsBMJGeR57Kk3FX9zeIplE5EFkcIY",
@@ -17,18 +14,6 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
 
 setPersistence(auth, browserLocalPersistence).catch(() => {});
-enableIndexedDbPersistence(db).catch(() => {});
-
-export const analytics = (() => {
-  try {
-    return getAnalytics(app);
-  } catch {
-    return null;
-  }
-})();
-
 export default app;
